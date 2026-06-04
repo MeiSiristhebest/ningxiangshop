@@ -1,6 +1,9 @@
 server:
   port: 9103
 spring:
+  threads:
+    virtual:
+      enabled: true
   application:
     name: @artifactId@
   cloud:
