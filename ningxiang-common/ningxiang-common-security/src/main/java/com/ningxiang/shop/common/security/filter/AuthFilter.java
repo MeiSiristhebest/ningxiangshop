@@ -2,12 +2,8 @@ package com.ningxiang.shop.common.security.filter;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ningxiang.shop.api.auth.bo.UserInfoInTokenBO;
-import com.ningxiang.shop.api.auth.constant.SysTypeEnum;
-import com.ningxiang.shop.api.auth.feign.TokenFeignClient;
-import com.ningxiang.shop.api.rbac.constant.HttpMethodEnum;
-import com.ningxiang.shop.api.rbac.feign.PermissionFeignClient;
-import com.ningxiang.shop.common.constant.Auth;
 import com.ningxiang.shop.common.feign.FeignInsideAuthConfig;
 import com.ningxiang.shop.common.handler.HttpHandler;
 import com.ningxiang.shop.common.response.ResponseEnum;
@@ -25,19 +21,21 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 
 /**
- * 授权过滤，只要实现AuthConfigAdapter接口，添加对应路径即可：
+ * 授权过滤拦截器，作为业务微服务的安全卫士：
+ * 直接解析网关透传并已进行 URL 编码的用户信息请求头，并存入上下文。
  *
- * @author FrozenWatermelon
- * @date 2020/7/11
+ * @author Ningxiang
  */
 @Component
 public class AuthFilter implements Filter {
 
-	private static Logger logger = LoggerFactory.getLogger(AuthFilter.class);
+	private static final Logger logger = LoggerFactory.getLogger(AuthFilter.class);
 
 	@Autowired
 	private AuthConfigAdapter authConfigAdapter;
@@ -46,13 +44,9 @@ public class AuthFilter implements Filter {
 	private HttpHandler httpHandler;
 
 	@Autowired
-	private TokenFeignClient tokenFeignClient;
-
-	@Autowired
-	private PermissionFeignClient permissionFeignClient;
-
-	@Autowired
 	private FeignInsideAuthConfig feignInsideAuthConfig;
+
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -60,23 +54,17 @@ public class AuthFilter implements Filter {
 		HttpServletRequest req = (HttpServletRequest) request;
 		HttpServletResponse resp = (HttpServletResponse) response;
 
+		// 1. 内部 Feign 间调用校验，符合则放行
 		if (!feignRequestCheck(req)) {
 			httpHandler.printServerResponseToWeb(ServerResponseEntity.fail(ResponseEnum.UNAUTHORIZED));
 			return;
 		}
 
-		if (Auth.CHECK_TOKEN_URI.equals(req.getRequestURI())) {
-			chain.doFilter(req, resp);
-			return;
-		}
-
-
+		// 2. 外部访问免鉴权的白名单路径放行
 		List<String> excludePathPatterns = authConfigAdapter.excludePathPatterns();
-
-		// 如果匹配不需要授权的路径，就不需要校验是否需要授权
 		if (CollectionUtil.isNotEmpty(excludePathPatterns)) {
+			AntPathMatcher pathMatcher = new AntPathMatcher();
 			for (String excludePathPattern : excludePathPatterns) {
-				AntPathMatcher pathMatcher = new AntPathMatcher();
 				if (pathMatcher.match(excludePathPattern, req.getRequestURI())) {
 					chain.doFilter(req, resp);
 					return;
@@ -84,84 +72,49 @@ public class AuthFilter implements Filter {
 			}
 		}
 
-		String accessToken = req.getHeader("Authorization");
+		// 3. 从 Header 提取网关透传的用户身份信息
+		String userInfoHeader = req.getHeader("x-user-info");
 
-		if (StrUtil.isBlank(accessToken)) {
-			httpHandler.printServerResponseToWeb(ServerResponseEntity.fail(ResponseEnum.UNAUTHORIZED));
-			return;
-		}
-
-		// 校验token，并返回用户信息
-		ServerResponseEntity<UserInfoInTokenBO> userInfoInTokenVoServerResponseEntity = tokenFeignClient
-				.checkToken(accessToken);
-		if (!userInfoInTokenVoServerResponseEntity.isSuccess()) {
-			httpHandler.printServerResponseToWeb(ServerResponseEntity.fail(ResponseEnum.UNAUTHORIZED));
-			return;
-		}
-
-		UserInfoInTokenBO userInfoInToken = userInfoInTokenVoServerResponseEntity.getData();
-
-		// 需要用户角色权限，就去根据用户角色权限判断是否
-		if (!checkRbac(userInfoInToken,req.getRequestURI(), req.getMethod())) {
+		// 4. 双重防御：未携带用户信息头则直接判断为未登录
+		if (StrUtil.isBlank(userInfoHeader)) {
 			httpHandler.printServerResponseToWeb(ServerResponseEntity.fail(ResponseEnum.UNAUTHORIZED));
 			return;
 		}
 
 		try {
-			// 保存上下文
+			// 5. URL 解密后并还原反序列化成 BO 对象
+			String decodedUserInfo = URLDecoder.decode(userInfoHeader, StandardCharsets.UTF_8.name());
+			UserInfoInTokenBO userInfoInToken = objectMapper.readValue(decodedUserInfo, UserInfoInTokenBO.class);
+
+			// 6. 保存进当前线程上下文 ThreadLocal
 			AuthUserContext.set(userInfoInToken);
 
 			chain.doFilter(req, resp);
-		}
-		finally {
+		} catch (Exception e) {
+			logger.error("解析网关透传用户信息异常", e);
+			httpHandler.printServerResponseToWeb(ServerResponseEntity.fail(ResponseEnum.UNAUTHORIZED));
+		} finally {
+			// 7. 清理上下文，防止线程复用引发的内存遗留
 			AuthUserContext.clean();
 		}
-
 	}
 
 	private boolean feignRequestCheck(HttpServletRequest req) {
-		// 不是feign请求，不用校验
 		if (!req.getRequestURI().startsWith(FeignInsideAuthConfig.FEIGN_INSIDE_URL_PREFIX)) {
 			return true;
 		}
 		String feignInsideSecret = req.getHeader(feignInsideAuthConfig.getKey());
 
-		// 校验feign 请求携带的key 和 value是否正确
-		if (StrUtil.isBlank(feignInsideSecret) || !Objects.equals(feignInsideSecret,feignInsideAuthConfig.getSecret())) {
+		if (StrUtil.isBlank(feignInsideSecret) || !Objects.equals(feignInsideSecret, feignInsideAuthConfig.getSecret())) {
 			return false;
 		}
-		// ip白名单
 		List<String> ips = feignInsideAuthConfig.getIps();
-		// 移除无用的空ip
 		ips.removeIf(StrUtil::isBlank);
-		// 有ip白名单，且ip不在白名单内，校验失败
-		if (CollectionUtil.isNotEmpty(ips)
-				&& !ips.contains(IpHelper.getIpAddr())) {
+		if (CollectionUtil.isNotEmpty(ips) && !ips.contains(IpHelper.getIpAddr())) {
 			logger.error("ip not in ip White list: {}, ip, {}", ips, IpHelper.getIpAddr());
 			return false;
 		}
 		return true;
 	}
-
-	/**
-	 * 用户角色权限校验
-	 * @param uri uri
-	 * @return 是否校验成功
-	 */
-	public boolean checkRbac(UserInfoInTokenBO userInfoInToken, String uri, String method) {
-
-		if (!Objects.equals(SysTypeEnum.PLATFORM.value(), userInfoInToken.getSysType()) && !Objects.equals(SysTypeEnum.MULTISHOP.value(), userInfoInToken.getSysType())) {
-			return true;
-		}
-
-		ServerResponseEntity<Boolean> booleanServerResponseEntity = permissionFeignClient
-				.checkPermission(userInfoInToken.getUserId(), userInfoInToken.getSysType(),uri,userInfoInToken.getIsAdmin(),HttpMethodEnum.valueOf(method.toUpperCase()).value() );
-
-		if (!booleanServerResponseEntity.isSuccess()) {
-			return false;
-		}
-
-		return booleanServerResponseEntity.getData();
-	}
-
 }
+
