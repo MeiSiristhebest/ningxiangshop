@@ -28,13 +28,7 @@ public class TokenController {
 
 	@PostMapping("/ua/token/refresh")
 	public ServerResponseEntity<TokenInfoVO> refreshToken(@Valid @RequestBody RefreshTokenDTO refreshTokenDTO) {
-		ServerResponseEntity<TokenInfoBO> tokenInfoServerResponseEntity = tokenStore
-				.refreshToken(refreshTokenDTO.getRefreshToken());
-		if (!tokenInfoServerResponseEntity.isSuccess()) {
-			return ServerResponseEntity.transform(tokenInfoServerResponseEntity);
-		}
-		return ServerResponseEntity
-				.success(BeanUtil.map(tokenInfoServerResponseEntity.getData(), TokenInfoVO.class));
+		return tokenStore.refreshToken(refreshTokenDTO.getRefreshToken());
 	}
 
 }

@@ -55,6 +55,11 @@
             <artifactId>ningxiang-api-biz</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Sa-Token 整合 Redis (Jackson 序列化) -->
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-redis-jackson</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
