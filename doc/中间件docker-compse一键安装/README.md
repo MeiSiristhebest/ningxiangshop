@@ -36,7 +36,7 @@ docker-compose up -d --build
  - rocketmq-dashboard：http://192.168.152.128:8180
 
 
-6.访问minio管理页面，右下角有个加号，创建存储区域(create bucker) 名为`mall4cloud`
+6.访问minio管理页面，右下角有个加号，创建存储区域(create bucker) 名为`ningxiang`
 
 ![image-20210616090042502](../img/中间件安装/minio新建桶.png)
 

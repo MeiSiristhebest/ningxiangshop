@@ -14,7 +14,7 @@
 
 这代码有没有文档呀？ 当然有啦，你已经下载了，在doc这个文件夹上，实在不知道，我就给链接出来咯：
 
-gitee：https://gitee.com/gz-yami/mall4cloud/tree/master/doc
+gitee：https://gitee.com/gz-ningxiang/ningxiang/tree/master/doc
 
 **开发环境搭建视频（推荐先看下文档再看视频）：https://www.bilibili.com/video/BV1TK411C7aV** 
 
@@ -25,33 +25,33 @@ gitee：https://gitee.com/gz-yami/mall4cloud/tree/master/doc
 
 ![阿里代码规约扫描结果](doc/img/readme/阿里代码规约扫描结果.png)
 
-具体目录结构和代码规范，可以查看 https://gitee.com/gz-yami/mall4cloud/tree/master/doc/%E4%BB%A3%E7%A0%81%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84
+具体目录结构和代码规范，可以查看 https://gitee.com/gz-ningxiang/ningxiang/tree/master/doc/%E4%BB%A3%E7%A0%81%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84
 
 ## 授权
 
 除开源版本外，本商城还提供商业版本的商城，欲知详情，请访问官网。
 
-商城官网：https://www.mall4j.com
+商城官网：https://www.ningxiang.com
 
-商城使用 AGPLv3 开源，请遵守 AGPLv3 的相关条款，或者联系作者获取商业授权(https://www.mall4j.com)
+商城使用 AGPLv3 开源，请遵守 AGPLv3 的相关条款，或者联系作者获取商业授权(https://www.ningxiang.com)
 
 ## 项目链接
 
-JAVA后台：https://gitee.com/gz-yami/mall4cloud
+JAVA后台：https://gitee.com/gz-ningxiang/ningxiang
 
-平台端：https://gitee.com/gz-yami/mall4cloud-platform
+平台端：https://gitee.com/gz-ningxiang/ningxiang-platform
 
-商家端：https://gitee.com/gz-yami/mall4cloud-multishop
+商家端：https://gitee.com/gz-ningxiang/ningxiang-multishop
 
-uni-app：https://gitee.com/gz-yami/mall4cloud-uniapp
+uni-app：https://gitee.com/gz-ningxiang/ningxiang-uniapp
 
 ## 演示地址
 
 商业版演示地址：
 
-pc端：https://cloud-pc.mall4j.com
+pc端：https://cloud-pc.ningxiang.com
 
-H5端：https://h5.mall4j.com/cloud
+H5端：https://h5.ningxiang.com/cloud
 
 商业版小程序演示
 
@@ -78,43 +78,43 @@ H5端：https://h5.mall4j.com/cloud
 - Mapper持久层：数据访问层，与底层 MySQL进行数据交互。
 - Listener：监听 `RocketMQ` 进行处理，有时候会监听`easyexcel`相关数据。
 
-关于`FeignClient`，由于微服务之间存在互相调用，`Feign` 是http协议，理论上是为了解耦，而实际上提供方接口进行修改，调用方却没有进行修改的时候，会造成异常，所以我们抽取出来。还有就是对内暴露的接口，是很多地方都公用的，所以我们还将接口抽取了出了一个模块，方便引用。可以看到`mall4cloud-api`这个模块下是所有对内`feign`接口的信息。
+关于`FeignClient`，由于微服务之间存在互相调用，`Feign` 是http协议，理论上是为了解耦，而实际上提供方接口进行修改，调用方却没有进行修改的时候，会造成异常，所以我们抽取出来。还有就是对内暴露的接口，是很多地方都公用的，所以我们还将接口抽取了出了一个模块，方便引用。可以看到`ningxiang-api`这个模块下是所有对内`feign`接口的信息。
 
 ## 目录结构
 
 ```
-mall4cloud
-├─mall4cloud-api -- 内网接口
-│  ├─mall4cloud-api-auth  -- 授权对内接口
-│  ├─mall4cloud-api-biz  -- biz对内接口
-│  ├─mall4cloud-api-leaf  -- 美团分布式id生成接口
-│  ├─mall4cloud-api-multishop  -- 店铺对内接口
-│  ├─mall4cloud-api-order  -- 订单对内接口
-│  ├─mall4cloud-api-platform  -- 平台对内接口
-│  ├─mall4cloud-api-product  -- 商品对内接口
-│  ├─mall4cloud-api-rbac  -- 用户角色权限对内接口
-│  ├─mall4cloud-api-search  -- 搜索对内接口
-│  └─mall4cloud-api-user  -- 用户对内接口
-├─mall4cloud-auth  -- 授权校验模块
-├─mall4cloud-biz  -- mall4cloud 业务代码。如图片上传/短信等
-├─mall4cloud-common -- 一些公共的方法
-│  ├─mall4cloud-common-cache  -- 缓存相关公共代码
-│  ├─mall4cloud-common-core  -- 公共模块核心（公共中的公共代码）
-│  ├─mall4cloud-common-database  -- 数据库连接相关公共代码
-│  ├─mall4cloud-common-order  -- 订单相关公共代码
-│  ├─mall4cloud-common-product  -- 商品相关公共代码
-│  ├─mall4cloud-common-rocketmq  -- rocketmq相关公共代码
-│  └─mall4cloud-common-security  -- 安全相关公共代码
-├─mall4cloud-gateway  -- 网关
-├─mall4cloud-leaf  -- 基于美团leaf的生成id服务
-├─mall4cloud-multishop  -- 商家端
-├─mall4cloud-order  -- 订单服务
-├─mall4cloud-payment  -- 支付服务
-├─mall4cloud-platform  -- 平台端
-├─mall4cloud-product  -- 商品服务
-├─mall4cloud-rbac  -- 用户角色权限模块
-├─mall4cloud-search  -- 搜索模块
-└─mall4cloud-user  -- 用户服务
+ningxiang
+├─ningxiang-api -- 内网接口
+│  ├─ningxiang-api-auth  -- 授权对内接口
+│  ├─ningxiang-api-biz  -- biz对内接口
+│  ├─ningxiang-api-leaf  -- 美团分布式id生成接口
+│  ├─ningxiang-api-multishop  -- 店铺对内接口
+│  ├─ningxiang-api-order  -- 订单对内接口
+│  ├─ningxiang-api-platform  -- 平台对内接口
+│  ├─ningxiang-api-product  -- 商品对内接口
+│  ├─ningxiang-api-rbac  -- 用户角色权限对内接口
+│  ├─ningxiang-api-search  -- 搜索对内接口
+│  └─ningxiang-api-user  -- 用户对内接口
+├─ningxiang-auth  -- 授权校验模块
+├─ningxiang-biz  -- ningxiang 业务代码。如图片上传/短信等
+├─ningxiang-common -- 一些公共的方法
+│  ├─ningxiang-common-cache  -- 缓存相关公共代码
+│  ├─ningxiang-common-core  -- 公共模块核心（公共中的公共代码）
+│  ├─ningxiang-common-database  -- 数据库连接相关公共代码
+│  ├─ningxiang-common-order  -- 订单相关公共代码
+│  ├─ningxiang-common-product  -- 商品相关公共代码
+│  ├─ningxiang-common-rocketmq  -- rocketmq相关公共代码
+│  └─ningxiang-common-security  -- 安全相关公共代码
+├─ningxiang-gateway  -- 网关
+├─ningxiang-leaf  -- 基于美团leaf的生成id服务
+├─ningxiang-multishop  -- 商家端
+├─ningxiang-order  -- 订单服务
+├─ningxiang-payment  -- 支付服务
+├─ningxiang-platform  -- 平台端
+├─ningxiang-product  -- 商品服务
+├─ningxiang-rbac  -- 用户角色权限模块
+├─ningxiang-search  -- 搜索模块
+└─ningxiang-user  -- 用户服务
 ```
 
 ## 技术选型
@@ -129,23 +129,23 @@ mall4cloud
 
 | 服务                                                 | 地址                    |
 | ---------------------------------------------------- |-----------------------|
-| mall4cloud-gatway 网关服务                           | http://127.0.0.1:8000 |
-| mall4cloud-auth  授权校验服务                        | http://127.0.0.1:9101 |
-| mall4cloud-biz     业务代码服务（如图片上传/短信等） | http://127.0.0.1:9000 |
-| mall4cloud-leaf   基于美团leaf的生成id服务           | http://127.0.0.1:9100 |
-| mall4cloud-multishop 商家服务                        | http://127.0.0.1:9103 |
-| mall4cloud-order         订单服务                    | http://127.0.0.1:9106 |
-| mall4cloud-payment   支付服务                        | http://127.0.0.1:9113 |
-| mall4cloud-product    商品服务                       | http://127.0.0.1:9114 |
-| mall4cloud-rbac          用户角色服务                | http://127.0.0.1:9102 |
-| mall4cloud-search      搜索服务                      | http://127.0.0.1:9108 |
-| mall4cloud-user          用户服务                    | http://127.0.0.1:9105 |
+| ningxiang-gatway 网关服务                           | http://127.0.0.1:8000 |
+| ningxiang-auth  授权校验服务                        | http://127.0.0.1:9101 |
+| ningxiang-biz     业务代码服务（如图片上传/短信等） | http://127.0.0.1:9000 |
+| ningxiang-leaf   基于美团leaf的生成id服务           | http://127.0.0.1:9100 |
+| ningxiang-multishop 商家服务                        | http://127.0.0.1:9103 |
+| ningxiang-order         订单服务                    | http://127.0.0.1:9106 |
+| ningxiang-payment   支付服务                        | http://127.0.0.1:9113 |
+| ningxiang-product    商品服务                       | http://127.0.0.1:9114 |
+| ningxiang-rbac          用户角色服务                | http://127.0.0.1:9102 |
+| ningxiang-search      搜索服务                      | http://127.0.0.1:9108 |
+| ningxiang-user          用户服务                    | http://127.0.0.1:9105 |
 
 
 
 ## 部署教程
 
-部署教程请参考该文件夹下的`/基本开发文档/mall4cloud开发环境搭建.md`以及`/开发环境搭建`目录下的中间件安装。
+部署教程请参考该文件夹下的`/基本开发文档/ningxiang开发环境搭建.md`以及`/开发环境搭建`目录下的中间件安装。
 
 ## 代码运行相关截图
 
@@ -171,8 +171,8 @@ mall4cloud
 
 
 ## 提交反馈
-- Mall4j官网 https://www.mall4j.com
-- mall4cloud开源技术QQ群：561496886
+- Mall4j官网 https://www.ningxiang.com
+- ningxiang开源技术QQ群：561496886
 - 如需购买商业版源码，请联系商务微信
 
   ![输入图片说明](https://19838323.s21i.faiusr.com/4/4/ABUIABAEGAAgksmNlAYojomK2gIwrAI4rAI!160x160.png)
@@ -180,10 +180,10 @@ mall4cloud
 
 
 ## springboot版本商城请点击
-https://gitee.com/gz-yami/mall4j
+https://gitee.com/gz-ningxiang/ningxiang
 
 ## 你的点赞鼓励，是我们前进的动力~
 ## 你的点赞鼓励，是我们前进的动力~
 ## 你的点赞鼓励，是我们前进的动力~
 
-## 更多信息请查看官网 https://www.mall4j.com
+## 更多信息请查看官网 https://www.ningxiang.com

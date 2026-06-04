@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>ningxiang</artifactId>
+        <groupId>com.ningxiang.shop</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>ningxiang-common</artifactId>
+    <packaging>pom</packaging>
+
+    <description>ningxiang 公共模块</description>
+    <modules>
+        <module>ningxiang-common-core</module>
+        <module>ningxiang-common-database</module>
+        <module>ningxiang-common-cache</module>
+        <module>ningxiang-common-security</module>
+        <module>ningxiang-common-order</module>
+        <module>ningxiang-common-rocketmq</module>
+    </modules>
+
+</project>

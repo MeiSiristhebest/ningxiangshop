@@ -4,24 +4,24 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.mall4j.cloud</groupId>
-    <artifactId>mall4cloud</artifactId>
+    <groupId>com.ningxiang.shop</groupId>
+    <artifactId>ningxiang</artifactId>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>mall4cloud-gateway</module>
-        <module>mall4cloud-auth</module>
-        <module>mall4cloud-common</module>
-        <module>mall4cloud-rbac</module>
-        <module>mall4cloud-leaf</module>
-        <module>mall4cloud-api</module>
-        <module>mall4cloud-multishop</module>
-        <module>mall4cloud-platform</module>
-        <module>mall4cloud-biz</module>
-        <module>mall4cloud-product</module>
-        <module>mall4cloud-search</module>
-        <module>mall4cloud-user</module>
-        <module>mall4cloud-order</module>
-        <module>mall4cloud-payment</module>
+        <module>ningxiang-gateway</module>
+        <module>ningxiang-auth</module>
+        <module>ningxiang-common</module>
+        <module>ningxiang-rbac</module>
+        <module>ningxiang-leaf</module>
+        <module>ningxiang-api</module>
+        <module>ningxiang-multishop</module>
+        <module>ningxiang-platform</module>
+        <module>ningxiang-biz</module>
+        <module>ningxiang-product</module>
+        <module>ningxiang-search</module>
+        <module>ningxiang-user</module>
+        <module>ningxiang-order</module>
+        <module>ningxiang-payment</module>
     </modules>
     <packaging>pom</packaging>
 
