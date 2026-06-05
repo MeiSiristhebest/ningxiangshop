@@ -37,6 +37,11 @@
             <artifactId>ningxiang-api-leaf</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 多数据源动态切换 (读写分离支持) -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
+        </dependency>
     </dependencies>
 
 </project>
