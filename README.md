@@ -84,30 +84,39 @@ graph TD
 
 ---
 
-### 亮点五：Redisson 升序排序防分布式死锁锁控制与 Watchdog 机制 🔒
+### 亮点五：防死锁 SKU 分布式锁与 Watchdog 自动续期租约 🔒
 
-*   **架构描述**：在高并发下单扣减库存场景中，多个并发订单包含相同的商品集合但请求顺序不同（例如订单 A 包含 sku1 和 sku2，订单 B 包含 sku2 和 sku1），容易发生**分布式锁死锁**。本项目在锁定前对 SKU ID 列表进行**升序排序**，确保加锁的物理顺序一致，从根本上打破死锁的“循环等待”条件。加锁时引入 Redisson 的 `RLock`，不设置过期时间，自动激活 Watchdog 机制每 10 秒进行锁租约自动延期，防止长事务执行过慢而导致锁提前释放引发超卖并发。
-*   **📂 核心代码自证直链**：
-    *   【分布式锁核心逻辑与 Sku 升序排序实现】: [SkuStockLockServiceImpl.java](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L91-L177)
-
----
-
-### 亮点六：通用 AOP 切面 `@Idempotent` 幂等性防护组件 🛡️
-
-*   **架构描述**：解决分布式微服务中 RocketMQ 消息网络抖动重复投递、前端重复点击等经典幂等性并发安全痛点。项目抽象出了通用 `@Idempotent` 注解，利用 **AOP 切面** 进行强拦截。切面利用 **Spring EL (SpEL) 表达式** 动态提取入参中的核心标识（如订单ID、支付流水号），以 `idempotent:mq:{resolvedKey}` 写入 Redis `SETNX` 占位做为“PROCESSING”拦截阻断；执行成功则状态更新为“SUCCESS”保持 TTL，执行失败或异常则主动删除 Key 允许重试，零代码侵入。
-*   **📂 核心代码自证直链**：
-    *   【接口防重幂等注解声明】: [Idempotent.java](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/annotation/Idempotent.java)
-    *   【SpEL 动态解析与 Redis 占位幂等拦截切面】: [IdempotentAspect.java](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/aspect/IdempotentAspect.java)
-    *   【RocketMQ 消费端订单支付通知幂等保护直观落地】: [OrderNotifyStockConsumer.java](ningxiang-product/src/main/java/com/ningxiang/shop/product/listener/OrderNotifyStockConsumer.java#L21-L28)
+*   **设计背景与痛点**：高并发大促场景下，多 SKU 订单的锁定由于不同线程加锁顺序不一致（如订单 A 锁 sku1, sku2；订单 B 并发锁 sku2, sku1），极易诱发**分布式死锁**。
+*   **工程解决方案**：
+    - **物理加锁顺序规整**：在执行锁定前，对传入的 SKU ID 列表进行**升序排序**，确保所有并发线程加锁的物理顺序完全一致，打破死锁的“循环等待”判定条件。
+    - **Watchdog 租约自动续期**：使用 Redisson 锁（不设定具体的锁过期时间，由看门狗机制接管），每 10 秒对锁的有效时间自动续期。这规避了因网络延迟、长事务或 JVM 垃圾回收导致锁提前失效，进而发生商品超卖的并发隐患。
+*   **📂 核心代码直链**：
+    - 【防死锁分布式锁核心逻辑】: [SkuStockLockServiceImpl.java](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L91-L177)
 
 ---
 
-### 亮点七：Sentinel 服务熔断限流控制与 Nacos 规则持久化 🚦
+### 亮点六：通用 AOP 幂等防重组件（基于 SpEL 动态解析与 Redis 状态机） 🛡️
 
-*   **架构描述**：保障大流量冲刷下的库存扣减与下单链路的高可用性。本项目在库存锁定等核心 API 上使用 `@SentinelResource` 注解进行限流保护，自定义限流拦截 `BlockHandler` 返回友好排队 JSON 提示，以及 `Fallback` 异常兜底逻辑。在本地 `bootstrap.yml` 中配置 Sentinel 连接 Nacos 动态配置源，实现 Sentinel 规则通过 Nacos 持久化发布和秒级动态规则拉取，彻底解决 Sentinel Dashboard 重启后限流规则丢失的弊病。
-*   **📂 核心代码自证直链**：
-    *   【Sentinel 熔断限流及 Fallback 兜底实现】: [SkuStockLockServiceImpl.java](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L90-L190)
-    *   【Sentinel 控制台与 Nacos 数据源动态同步配置】: [bootstrap.yml](ningxiang-product/src/main/resources/bootstrap.yml#L23-L35)
+*   **设计背景与痛点**：微服务架构下，由于 RocketMQ 消息网络抖动重复投递、前端重复点击导致的数据脏污频发。传统的在业务层写 `select count(*)` 校验既不够优雅，又存在“读写时间差”导致的并发穿透风险。
+*   **工程解决方案**：
+    - **无侵入 AOP & SpEL 动态提取**：抽象出通用的 `@Idempotent` 幂等防重注解。切面内部基于 Spring EL（SpEL）解析器，动态获取方法入参中的业务主键（如订单ID、支付通知流水号）。
+    - **Redis 三阶段状态控制**：利用 Redis `SETNX` 占位将对应的 Token 标记为 `PROCESSING` 状态，占位失败即代表重复提交并直接拦截；业务方法执行成功后置为 `SUCCESS` 并设置合理的 TTL（防止短时间内重复请求）；业务若执行失败或抛出异常，则主动删除对应 Key 释放重试。
+*   **📂 核心代码直链**：
+    - 【防重幂等注解声明】: [Idempotent.java](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/annotation/Idempotent.java)
+    - 【SpEL 解析与 Redis 状态管理切面】: [IdempotentAspect.java](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/aspect/IdempotentAspect.java)
+    - 【消费端落地直观自证】: [OrderNotifyStockConsumer.java](ningxiang-product/src/main/java/com/ningxiang/shop/product/listener/OrderNotifyStockConsumer.java#L21-L28)
+
+---
+
+### 亮点七：Sentinel 服务容错防护与 Nacos 规则持久化 🚦
+
+*   **设计背景与痛点**：库存锁定、订单结算等接口处于高载链路。若没有妥善的流量保护，一旦被上游流量激增拖慢，就会因为线程池耗尽进而导致服务雪崩。而原生的 Sentinel 规则直接保存在内存中，服务重启即丢失。
+*   **工程解决方案**：
+    - **限流熔断埋点与 Fallback**：使用 `@SentinelResource` 保护库存锁定 API。在并发峰值超限时，通过 `BlockHandler` 直接返回排队重试响应，并在 `Fallback` 中拦截并规避系统底层报错的外泄。
+    - **Nacos 规则源动态拉取与持久化**：在本地 `bootstrap.yml` 中配置 Sentinel 的 Nacos 数据源，将其与配置中心 Nacos 规则双向桥接。流控与熔断降级规则由 Nacos 统一存储和下发，彻底解决了生产环境下规则重启丢失的痛点。
+*   **📂 核心代码直链**：
+    - 【流量防护与 Fallback 降级实现】: [SkuStockLockServiceImpl.java](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L90-L190)
+    - 【Sentinel 控制台与 Nacos 数据源桥接】: [bootstrap.yml](ningxiang-product/src/main/resources/bootstrap.yml#L23-L35)
 
 ---
 
