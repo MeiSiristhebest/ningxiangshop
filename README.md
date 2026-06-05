@@ -1,189 +1,98 @@
-![输入图片说明](doc/img/readme/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20211203094919.png)
+# 宁享购 (Ningxiang Go) 企业级微服务电商系统
 
+[![Java Version](https://img.shields.io/badge/Java-21-orange.svg?style=flat-svg)](https://www.oracle.com/java/technologies/downloads/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.0-blue.svg?style=flat-svg)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0.1-green.svg?style=flat-svg)](https://spring.io/projects/spring-cloud)
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg?style=flat-svg)](#)
 
-一个基于Spring Cloud、Nacos、Seata、Mysql、Redis、RocketMQ、canal、ElasticSearch、minio的微服务B2B2C电商商城系统，采用主流的互联网技术架构、全新的UI设计、支持集群部署、服务注册和发现以及拥有完整的订单流程等，代码完全开源，没有任何二次封装，是一个非常适合二次开发的电商平台系统。
+宁享购（Ningxiang Go）是一套基于 **Java 21**、**Spring Boot 3.3** 以及 **Vue 3** 体系构建的现代化、高性能、云原生企业级微服务 B2B2C 电商平台。项目深度践行敏捷开发与微服务最佳实践，实现了核心鉴权下沉、多级缓存一致性保障及极致的并发处理能力，是新一代数字化电商系统的理想底座。
 
-## Spring以及VUE官方宣布，SpringBoot2与Vue2已在2023年底停止维护。新项目建议使用SpringBoot3+Vue3的组合，本商城已完成升级!!!
+---
 
+## 🚀 项目核心高光与技术加分项
 
-## 前言
+### 1. 基于 Sa-Token + Gateway 的统一网关前置鉴权 🛡️
+*   **架构演进**：摒弃传统的“微服务每次请求都要通过 Feign 远程调用认证中心校验 Token”的落后设计，将鉴权拦截统一前置于 [ningxiang-gateway](ningxiang-gateway) 网关层（使用 `sa-token-reactor-spring-boot3-starter` 响应式版本）。
+*   **零开销透传**：网关鉴权通过后，将已登录的账户 Session 数据（UserInfo）进行 JSON 序列化并进行 URL 编码，以 `x-user-info` 请求头传递给下游。业务微服务过滤器只需从请求头解码即可直接装配 `ThreadLocal` 线程上下文，**内网鉴权 RPC 交互开销降为 0**。
 
-本商城致力于为中大型企业打造一个功能完整、易于维护的微服务B2B2C电商商城系统，采用主流微服务技术实现。后台管理系统包含平台管理，店铺管理、商品管理、订单管理、规格管理、权限管理、资源管理等模块。
+### 2. 注解级分布式二级缓存架构（Caffeine + Redis + MQ 广播同步）⚡
+*   **极致吞吐**：在商品模块中设计了自定义的 Spring Cache 抽象实现。一级缓存为本地 JVM 内存缓存 **Caffeine**（极致响应速度），二级缓存为分布式缓存 **Redis**（保障数据持久与共享）。
+*   **注解级无感集成**：自定义 `MultilevelCacheManager`，无需对业务层代码进行任何侵入式修改，原生的 `@Cacheable`、`@CacheEvict` 即可自动享受多级缓存。
+*   **基于 MQ 广播的缓存强一致性**：当后台修改商品或执行缓存失效时，除了清理 Redis，还会向 RocketMQ 广播一条清除通知；集群中所有部署的微服务实例监听到广播消息后，自动擦除本地 Caffeine 缓存，**彻底解决了分布式环境下本地内存缓存不一致的痛点**。
 
-## 文档
+### 3. Java 21 虚拟线程 (Virtual Threads) 全局激活
+*   在网关、授权及 10 个业务微服务中全面开启了虚拟线程支持。在高 I/O 的电商交易并发场景下，Tomcat 容器会自动以极低开销的虚拟线程替换重量级物理线程池，使系统在网络并发处理能力上呈现出数量级级别的飞跃，并极大地降低了 JVM 内存开销。
 
-这代码有没有文档呀？ 当然有啦，你已经下载了，在doc这个文件夹上，实在不知道，我就给链接出来咯：
+---
 
-gitee：https://gitee.com/gz-ningxiang/ningxiang/tree/master/doc
-
-**开发环境搭建视频（推荐先看下文档再看视频）：https://www.bilibili.com/video/BV1TK411C7aV** 
-
-有声音了。如果视频对你有用，记得点赞投币噢。 
-
-本项目是一个极度遵守阿里巴巴代码规约的项目，以下是代码规约扫描结果
-
-
-![阿里代码规约扫描结果](doc/img/readme/阿里代码规约扫描结果.png)
-
-具体目录结构和代码规范，可以查看 https://gitee.com/gz-ningxiang/ningxiang/tree/master/doc/%E4%BB%A3%E7%A0%81%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84
-
-## 授权
-
-除开源版本外，本商城还提供商业版本的商城，欲知详情，请访问官网。
-
-商城官网：https://www.ningxiang.com
-
-商城使用 AGPLv3 开源，请遵守 AGPLv3 的相关条款，或者联系作者获取商业授权(https://www.ningxiang.com)
-
-## 项目链接
-
-JAVA后台：https://gitee.com/gz-ningxiang/ningxiang
-
-平台端：https://gitee.com/gz-ningxiang/ningxiang-platform
-
-商家端：https://gitee.com/gz-ningxiang/ningxiang-multishop
-
-uni-app：https://gitee.com/gz-ningxiang/ningxiang-uniapp
-
-## 演示地址
-
-商业版演示地址：
-
-pc端：https://cloud-pc.ningxiang.com
-
-H5端：https://h5.ningxiang.com/cloud
-
-商业版小程序演示
-
-![输入图片说明](doc/img/readme/%E7%99%BD%E6%B4%9E%E7%89%88%E5%B0%8F%E7%A8%8B%E5%BA%8F.png)
-
-## 目录结构规范
-
-我们也有自己的目录结构
-
-![img](./doc/img/%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84%E5%92%8C%E8%A7%84%E8%8C%83/%E5%BA%94%E7%94%A8%E5%88%86%E5%B1%82.png)
-
-- VO（View Object）：显示层对象，通常是 Web 向模板渲染引擎层传输的对象。
-- DTO（Data Transfer Object）：数据传输对象，前端像后台进行传输的对象，类似于param。
-- BO（Business Object）：业务对象，内部业务对象，只在内部传递，不对外进行传递。
-- Model：模型层，此对象与数据库表结构一一对应，通过 Mapper 层向上传输数据源对象。
-- Controller：主要是对外部访问控制进行转发，各类基本参数校验，或者不复用的业务简单处理等。为了简单起见，一些与事务无关的代码也在这里编写。
-- FeignClient：由于微服务之间存在互相调用，这里是内部请求的接口。
-- Controller：主要是对内部访问控制进行转发，各类基本参数校验，或者不复用的业务简单处理等。为了简单起见，一些与事务无关的代码也在这里编写。
-- Service 层：相对具体的业务逻辑服务层。
-- Manager 层：通用业务处理层，它有如下特征：
-  - 1） 对第三方平台封装的层，预处理返回结果及转化异常信息，适配上层接口。
-  - 2） 对 Service 层通用能力的下沉，如缓存方案、中间件通用处理。
-  - 3） 与 DAO 层交互，对多个 DAO 的组合复用。
-- Mapper持久层：数据访问层，与底层 MySQL进行数据交互。
-- Listener：监听 `RocketMQ` 进行处理，有时候会监听`easyexcel`相关数据。
-
-关于`FeignClient`，由于微服务之间存在互相调用，`Feign` 是http协议，理论上是为了解耦，而实际上提供方接口进行修改，调用方却没有进行修改的时候，会造成异常，所以我们抽取出来。还有就是对内暴露的接口，是很多地方都公用的，所以我们还将接口抽取了出了一个模块，方便引用。可以看到`ningxiang-api`这个模块下是所有对内`feign`接口的信息。
-
-## 目录结构
+## 🛠️ 后端微服务模块构成 (com.ningxiang.shop)
 
 ```
 ningxiang
-├─ningxiang-api -- 内网接口
-│  ├─ningxiang-api-auth  -- 授权对内接口
-│  ├─ningxiang-api-biz  -- biz对内接口
-│  ├─ningxiang-api-leaf  -- 美团分布式id生成接口
-│  ├─ningxiang-api-multishop  -- 店铺对内接口
-│  ├─ningxiang-api-order  -- 订单对内接口
-│  ├─ningxiang-api-platform  -- 平台对内接口
-│  ├─ningxiang-api-product  -- 商品对内接口
-│  ├─ningxiang-api-rbac  -- 用户角色权限对内接口
-│  ├─ningxiang-api-search  -- 搜索对内接口
-│  └─ningxiang-api-user  -- 用户对内接口
-├─ningxiang-auth  -- 授权校验模块
-├─ningxiang-biz  -- ningxiang 业务代码。如图片上传/短信等
-├─ningxiang-common -- 一些公共的方法
-│  ├─ningxiang-common-cache  -- 缓存相关公共代码
-│  ├─ningxiang-common-core  -- 公共模块核心（公共中的公共代码）
-│  ├─ningxiang-common-database  -- 数据库连接相关公共代码
-│  ├─ningxiang-common-order  -- 订单相关公共代码
-│  ├─ningxiang-common-product  -- 商品相关公共代码
-│  ├─ningxiang-common-rocketmq  -- rocketmq相关公共代码
-│  └─ningxiang-common-security  -- 安全相关公共代码
-├─ningxiang-gateway  -- 网关
-├─ningxiang-leaf  -- 基于美团leaf的生成id服务
-├─ningxiang-multishop  -- 商家端
-├─ningxiang-order  -- 订单服务
-├─ningxiang-payment  -- 支付服务
-├─ningxiang-platform  -- 平台端
-├─ningxiang-product  -- 商品服务
-├─ningxiang-rbac  -- 用户角色权限模块
-├─ningxiang-search  -- 搜索模块
-└─ningxiang-user  -- 用户服务
+├─ningxiang-api -- 微服务间内网 RPC 声明接口
+│  ├─ningxiang-api-auth       -- 授权服务 API
+│  ├─ningxiang-api-biz        -- 业务支撑 API
+│  ├─ningxiang-api-leaf       -- 美团分布式 ID 生成 API
+│  ├─ningxiang-api-multishop  -- 商家服务 API
+│  ├─ningxiang-api-order      -- 订单服务 API
+│  ├─ningxiang-api-platform   -- 运营平台 API
+│  ├─ningxiang-api-product    -- 商品服务 API
+│  ├─ningxiang-api-rbac       -- 权限控制 API
+│  ├─ningxiang-api-search     -- 搜索服务 API
+│  └─ningxiang-api-user       -- 用户服务 API
+├─ningxiang-auth -- 统一授权登录校验服务
+├─ningxiang-biz -- 通用业务支撑服务（图片存储、短信网关等）
+├─ningxiang-gateway -- 微服务统一网关（Sa-Token 响应式网关鉴权）
+├─ningxiang-leaf -- 基于美团 Leaf 算法的分布式主键生成器
+├─ningxiang-multishop -- 商家端业务微服务
+├─ningxiang-platform -- 运营管理端业务微服务
+├─ningxiang-product -- 商品与多级缓存服务
+├─ningxiang-order -- 订单与交易流程服务
+├─ningxiang-payment -- 聚合支付服务
+├─ningxiang-rbac -- 角色及菜单权限控制服务
+├─ningxiang-search -- 基于 ElasticSearch + Canal 的搜索引擎服务
+├─ningxiang-user -- 用户资产与会员服务
+└─ningxiang-common -- 核心公共依赖与架构抽象组件
 ```
 
-## 技术选型
+---
 
-![技术框架](doc/img/readme/技术框架.png)
+## 📊 核心技术选型
 
-## 系统架构图
+| 技术 | 选型版本 | 作用 |
+| :--- | :--- | :--- |
+| **Java SDK** | JDK 21 (LTS) | 核心编译与虚拟线程运行目标 |
+| **核心框架** | Spring Boot 3.3.0 | 基础应用及自动装配基座 |
+| **微服务治理** | Spring Cloud 2023.0.1 | 声明式 RPC 与负载均衡组件 |
+| **注册/配置中心** | Nacos 2.3.2 | 服务注册发现与动态配置中心 |
+| **安全与鉴权** | Sa-Token 1.38.0 | 响应式路由鉴权、分布式多会话管理 |
+| **分布式事务** | Seata 2.0.0 | 微服务高并发分布式事务控制 |
+| **消息队列** | RocketMQ 5.x | 分布式事件驱动、多级缓存广播同步 |
+| **本地缓存** | Caffeine 3.x | 本地一级高性能内存缓存 |
+| **分布式缓存** | Redis 7.x / Jackson | 分布式二级缓存与 Token 共享介质 |
+| **数据库** | MySQL 8.0 | 关系型主数据存储 |
+| **前端架构** | Vue 3 + Vite 5 + TS | 平台管理端与商家端前沿前端底座 |
 
-![架构图](doc/img/readme/架构图.png)
+---
 
-## 商城部署后 API 地址
+## 🏃 开发环境快速启动指南
 
-| 服务                                                 | 地址                    |
-| ---------------------------------------------------- |-----------------------|
-| ningxiang-gatway 网关服务                           | http://127.0.0.1:8000 |
-| ningxiang-auth  授权校验服务                        | http://127.0.0.1:9101 |
-| ningxiang-biz     业务代码服务（如图片上传/短信等） | http://127.0.0.1:9000 |
-| ningxiang-leaf   基于美团leaf的生成id服务           | http://127.0.0.1:9100 |
-| ningxiang-multishop 商家服务                        | http://127.0.0.1:9103 |
-| ningxiang-order         订单服务                    | http://127.0.0.1:9106 |
-| ningxiang-payment   支付服务                        | http://127.0.0.1:9113 |
-| ningxiang-product    商品服务                       | http://127.0.0.1:9114 |
-| ningxiang-rbac          用户角色服务                | http://127.0.0.1:9102 |
-| ningxiang-search      搜索服务                      | http://127.0.0.1:9108 |
-| ningxiang-user          用户服务                    | http://127.0.0.1:9105 |
+### 1. 启动中间件
+推荐使用本地 Docker 容器快速拉起开发所需的各项中间件：
+*   **MySQL 8.0**
+*   **Redis 7.x**
+*   **RocketMQ 5.x**
+*   **Nacos 2.x**
+*   **Seata 2.0.0**
 
+### 2. 数据库与配置导入
+1.  创建 MySQL 数据库，将 [db/](db/) 目录下各模块对应的 SQL 脚本（如 `ningxiang_platform.sql`、`ningxiang_user.sql` 等）导入其中。
+2.  登录 Nacos 控制台（`http://localhost:8848/nacos`），将 [db/ningxiang_nacos.sql](db/ningxiang_nacos.sql) 中的配置表导入配置中心。
+3.  在 Nacos 的 `application-dev.yml` 配置中修改 MySQL 数据库连接、Redis 与 RocketMQ 地址。
 
-
-## 部署教程
-
-部署教程请参考该文件夹下的`/基本开发文档/ningxiang开发环境搭建.md`以及`/开发环境搭建`目录下的中间件安装。
-
-## 代码运行相关截图
-
-### 1.后台截图
-
-- 平台端
-
-  ![](doc/img/readme/image-20231130110607548.png)
-
-- 商家端
-
-  ![image-20210705151729559](doc/img/readme/image-20231130112350296.png)
-
-  ![image-20210705151847270](doc/img/readme/image-20231130112429089.png)
-
-### 2.小程序截图
-
-![小程序-1625472143277](doc/img/readme/小程序.png)
-
-### 3.uni-app截图
-
-![uniapp-1625469707350](doc/img/readme/uniapp.png)
-
-
-## 提交反馈
-- Mall4j官网 https://www.ningxiang.com
-- ningxiang开源技术QQ群：561496886
-- 如需购买商业版源码，请联系商务微信
-
-  ![输入图片说明](https://19838323.s21i.faiusr.com/4/4/ABUIABAEGAAgksmNlAYojomK2gIwrAI4rAI!160x160.png)
-
-
-
-## springboot版本商城请点击
-https://gitee.com/gz-ningxiang/ningxiang
-
-## 你的点赞鼓励，是我们前进的动力~
-## 你的点赞鼓励，是我们前进的动力~
-## 你的点赞鼓励，是我们前进的动力~
-
-## 更多信息请查看官网 https://www.ningxiang.com
+### 3. 微服务启动顺序
+顺序在 IDE 中执行以下各模块的主启动类（`Application`）：
+1.  `ningxiang-leaf` (ID 生成服务)
+2.  `ningxiang-auth` (认证中心)
+3.  `ningxiang-gateway` (统一网关，服务端口：`8000`)
+4.  其他业务微服务（`ningxiang-product`、`ningxiang-user`、`ningxiang-order` 等）
