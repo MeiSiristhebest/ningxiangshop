@@ -20,5 +20,17 @@ spring:
           - application-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
         username: ${spring.cloud.nacos.discovery.username}
         password: ${spring.cloud.nacos.discovery.password}
+    sentinel:
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:192.168.152.128:8080}
+        port: 8719
+      datasource:
+        flow:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            data-id: @artifactId@-flow-rules
+            group-id: SENTINEL_GROUP
+            data-type: json
+            rule-type: flow
   profiles:
     active: @profiles.active@

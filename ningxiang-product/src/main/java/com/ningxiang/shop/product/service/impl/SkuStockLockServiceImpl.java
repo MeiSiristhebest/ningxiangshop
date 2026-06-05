@@ -20,6 +20,10 @@ import com.ningxiang.shop.product.model.SkuStockLock;
 import com.ningxiang.shop.product.service.SkuStockLockService;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.stereotype.Service;
@@ -28,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 /**
@@ -54,6 +60,9 @@ public class SkuStockLockServiceImpl implements SkuStockLockService {
 
     @Autowired
     private RocketMQTemplate stockMqTemplate;
+
+    @Autowired
+    private RedissonClient redissonClient;
 
     @Override
     public PageVO<SkuStockLock> page(PageDTO pageDTO) {
@@ -82,38 +91,94 @@ public class SkuStockLockServiceImpl implements SkuStockLockService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @SentinelResource(value = "lockStock", blockHandler = "handleLockStockBlock", fallback = "handleLockStockFallback")
     public ServerResponseEntity<Void> lock(List<SkuStockLockDTO> skuStockLocksParam) {
+        if (CollectionUtil.isEmpty(skuStockLocksParam)) {
+            return ServerResponseEntity.success();
+        }
 
-        List<SkuStockLock> skuStockLocks = new ArrayList<>();
-        for (SkuStockLockDTO skuStockLockDTO : skuStockLocksParam) {
-            SkuStockLock skuStockLock = new SkuStockLock();
-            skuStockLock.setCount(skuStockLockDTO.getCount());
-            skuStockLock.setOrderId(skuStockLockDTO.getOrderId());
-            skuStockLock.setSkuId(skuStockLockDTO.getSkuId());
-            skuStockLock.setSpuId(skuStockLockDTO.getSpuId());
-            skuStockLock.setStatus(0);
-            skuStockLocks.add(skuStockLock);
-            // 减sku库存
-            int skuStockUpdateIsSuccess = skuStockMapper.reduceStockByOrder(skuStockLockDTO.getSkuId(), skuStockLockDTO.getCount());
-            if (skuStockUpdateIsSuccess < 1) {
-                throw new NingxiangException(ResponseEnum.NOT_STOCK, "商品skuId: " + skuStockLockDTO.getSkuId());
+        // 1. 升序排序 Sku ID 以防止分布式死锁 (Distributed Deadlock Prevention)
+        List<SkuStockLockDTO> sortedLocksParam = skuStockLocksParam.stream()
+                .sorted(Comparator.comparing(SkuStockLockDTO::getSkuId))
+                .collect(Collectors.toList());
+
+        List<RLock> locks = new ArrayList<>();
+        try {
+            // 2. 依次尝试获取每个 Sku 的分布式锁
+            for (SkuStockLockDTO skuStockLockDTO : sortedLocksParam) {
+                String lockKey = "lock:product:sku:" + skuStockLockDTO.getSkuId();
+                RLock lock = redissonClient.getLock(lockKey);
+                // 尝试等待最多 5 秒获取锁，激活 Watchdog 自动延期机制
+                if (lock.tryLock(5, TimeUnit.SECONDS)) {
+                    locks.add(lock);
+                } else {
+                    throw new NingxiangException(ResponseEnum.EXCEPTION, "系统繁忙，锁定库存失败，请稍后再试");
+                }
             }
-            // 减商品库存
-            int spuStockUpdateIsSuccess = spuExtensionMapper.reduceStockByOrder(skuStockLockDTO.getSpuId(), skuStockLockDTO.getCount());
-            if (spuStockUpdateIsSuccess < 1) {
-                throw new NingxiangException(ResponseEnum.NOT_STOCK, "商品spuId: " + skuStockLockDTO.getSpuId());
+
+            // 3. 执行核心库存扣减与保存操作
+            List<SkuStockLock> skuStockLocks = new ArrayList<>();
+            for (SkuStockLockDTO skuStockLockDTO : skuStockLocksParam) {
+                SkuStockLock skuStockLock = new SkuStockLock();
+                skuStockLock.setCount(skuStockLockDTO.getCount());
+                skuStockLock.setOrderId(skuStockLockDTO.getOrderId());
+                skuStockLock.setSkuId(skuStockLockDTO.getSkuId());
+                skuStockLock.setSpuId(skuStockLockDTO.getSpuId());
+                skuStockLock.setStatus(0);
+                skuStockLocks.add(skuStockLock);
+                
+                // 减sku库存
+                int skuStockUpdateIsSuccess = skuStockMapper.reduceStockByOrder(skuStockLockDTO.getSkuId(), skuStockLockDTO.getCount());
+                if (skuStockUpdateIsSuccess < 1) {
+                    throw new NingxiangException(ResponseEnum.NOT_STOCK, "商品skuId: " + skuStockLockDTO.getSkuId());
+                }
+                // 减商品库存
+                int spuStockUpdateIsSuccess = spuExtensionMapper.reduceStockByOrder(skuStockLockDTO.getSpuId(), skuStockLockDTO.getCount());
+                if (spuStockUpdateIsSuccess < 1) {
+                    throw new NingxiangException(ResponseEnum.NOT_STOCK, "商品spuId: " + skuStockLockDTO.getSpuId());
+                }
+            }
+
+            // 保存库存锁定信息
+            skuStockLockMapper.saveBatch(skuStockLocks);
+            List<Long> orderIds = skuStockLocksParam.stream().map(SkuStockLockDTO::getOrderId).collect(Collectors.toList());
+            
+            // 一个小时后解锁库存
+            SendStatus sendStatus = stockMqTemplate.syncSend(RocketMqConstant.STOCK_UNLOCK_TOPIC, new GenericMessage<>(orderIds), RocketMqConstant.TIMEOUT, RocketMqConstant.CANCEL_ORDER_DELAY_LEVEL + 1).getSendStatus();
+            if (!Objects.equals(sendStatus, SendStatus.SEND_OK)) {
+                throw new NingxiangException(ResponseEnum.EXCEPTION);
+            }
+            return ServerResponseEntity.success();
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new NingxiangException(ResponseEnum.EXCEPTION, "锁定库存发生线程中断");
+        } finally {
+            // 4. 按获取锁的相反顺序释放锁 (Release locks in reverse order)
+            for (int i = locks.size() - 1; i >= 0; i--) {
+                RLock lock = locks.get(i);
+                if (lock.isHeldByCurrentThread()) {
+                    lock.unlock();
+                }
             }
         }
-        // 保存库存锁定信息
-        skuStockLockMapper.saveBatch(skuStockLocks);
-        List<Long> orderIds = skuStockLocksParam.stream().map(SkuStockLockDTO::getOrderId).collect(Collectors.toList());
-        // 一个小时后解锁库存
-        SendStatus sendStatus = stockMqTemplate.syncSend(RocketMqConstant.STOCK_UNLOCK_TOPIC, new GenericMessage<>(orderIds), RocketMqConstant.TIMEOUT, RocketMqConstant.CANCEL_ORDER_DELAY_LEVEL + 1).getSendStatus();
-        if (!Objects.equals(sendStatus,SendStatus.SEND_OK)) {
-            // 消息发不出去就抛异常，发的出去无所谓
-            throw new NingxiangException(ResponseEnum.EXCEPTION);
+    }
+
+    /**
+     * Sentinel 限流降级 BlockHandler
+     */
+    public ServerResponseEntity<Void> handleLockStockBlock(List<SkuStockLockDTO> skuStockLocksParam, BlockException ex) {
+        return ServerResponseEntity.showFailMsg("当前下单人数过多，排队锁定中，请稍后再试");
+    }
+
+    /**
+     * Sentinel 异常 Fallback
+     */
+    public ServerResponseEntity<Void> handleLockStockFallback(List<SkuStockLockDTO> skuStockLocksParam, Throwable t) {
+        if (t instanceof NingxiangException) {
+            throw (NingxiangException) t; // 业务异常直接抛出，触发正常事务回滚
         }
-        return ServerResponseEntity.success();
+        return ServerResponseEntity.showFailMsg("系统繁忙，请稍后再试");
     }
 
     @Override

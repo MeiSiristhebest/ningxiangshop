@@ -84,6 +84,33 @@ graph TD
 
 ---
 
+### 亮点五：Redisson 升序排序防分布式死锁锁控制与 Watchdog 机制 🔒
+
+*   **架构描述**：在高并发下单扣减库存场景中，多个并发订单包含相同的商品集合但请求顺序不同（例如订单 A 包含 sku1 和 sku2，订单 B 包含 sku2 和 sku1），容易发生**分布式锁死锁**。本项目在锁定前对 SKU ID 列表进行**升序排序**，确保加锁的物理顺序一致，从根本上打破死锁的“循环等待”条件。加锁时引入 Redisson 的 `RLock`，不设置过期时间，自动激活 Watchdog 机制每 10 秒进行锁租约自动延期，防止长事务执行过慢而导致锁提前释放引发超卖并发。
+*   **📂 核心代码自证直链**：
+    *   【分布式锁核心逻辑与 Sku 升序排序实现】: [SkuStockLockServiceImpl.java](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L91-L177)
+
+---
+
+### 亮点六：通用 AOP 切面 `@Idempotent` 幂等性防护组件 🛡️
+
+*   **架构描述**：解决分布式微服务中 RocketMQ 消息网络抖动重复投递、前端重复点击等经典幂等性并发安全痛点。项目抽象出了通用 `@Idempotent` 注解，利用 **AOP 切面** 进行强拦截。切面利用 **Spring EL (SpEL) 表达式** 动态提取入参中的核心标识（如订单ID、支付流水号），以 `idempotent:mq:{resolvedKey}` 写入 Redis `SETNX` 占位做为“PROCESSING”拦截阻断；执行成功则状态更新为“SUCCESS”保持 TTL，执行失败或异常则主动删除 Key 允许重试，零代码侵入。
+*   **📂 核心代码自证直链**：
+    *   【接口防重幂等注解声明】: [Idempotent.java](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/annotation/Idempotent.java)
+    *   【SpEL 动态解析与 Redis 占位幂等拦截切面】: [IdempotentAspect.java](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/aspect/IdempotentAspect.java)
+    *   【RocketMQ 消费端订单支付通知幂等保护直观落地】: [OrderNotifyStockConsumer.java](ningxiang-product/src/main/java/com/ningxiang/shop/product/listener/OrderNotifyStockConsumer.java#L21-L28)
+
+---
+
+### 亮点七：Sentinel 服务熔断限流控制与 Nacos 规则持久化 🚦
+
+*   **架构描述**：保障大流量冲刷下的库存扣减与下单链路的高可用性。本项目在库存锁定等核心 API 上使用 `@SentinelResource` 注解进行限流保护，自定义限流拦截 `BlockHandler` 返回友好排队 JSON 提示，以及 `Fallback` 异常兜底逻辑。在本地 `bootstrap.yml` 中配置 Sentinel 连接 Nacos 动态配置源，实现 Sentinel 规则通过 Nacos 持久化发布和秒级动态规则拉取，彻底解决 Sentinel Dashboard 重启后限流规则丢失的弊病。
+*   **📂 核心代码自证直链**：
+    *   【Sentinel 熔断限流及 Fallback 兜底实现】: [SkuStockLockServiceImpl.java](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L90-L190)
+    *   【Sentinel 控制台与 Nacos 数据源动态同步配置】: [bootstrap.yml](ningxiang-product/src/main/resources/bootstrap.yml#L23-L35)
+
+---
+
 ## 🛠️ 后端微服务模块构成 (com.ningxiang.shop)
 
 ```

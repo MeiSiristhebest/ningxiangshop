@@ -58,10 +58,17 @@
         <spring-javaformat.version>0.0.22</spring-javaformat.version>
         <sa-token.version>1.38.0</sa-token.version>
         <dynamic-datasource.version>4.3.0</dynamic-datasource.version>
+        <redisson.version>3.31.0</redisson.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- Redisson 分布式锁 -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
             <!-- 动态数据源 (读写分离支持) -->
             <dependency>
                 <groupId>com.baomidou</groupId>

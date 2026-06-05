@@ -2,6 +2,7 @@ package com.ningxiang.shop.product.listener;
 
 import com.ningxiang.shop.common.order.bo.PayNotifyBO;
 import com.ningxiang.shop.common.rocketmq.config.RocketMqConstant;
+import com.ningxiang.shop.common.security.annotation.Idempotent;
 import com.ningxiang.shop.product.service.SkuStockLockService;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -23,6 +24,7 @@ public class OrderNotifyStockConsumer implements RocketMQListener<PayNotifyBO> {
      * 订单支付成功锁定库存
      */
     @Override
+    @Idempotent(key = "'orderNotifyStock:' + #message.orderIds.get(0)", expireTime = 600, message = "订单支付库存通知处理中，请勿重复投递")
     public void onMessage(PayNotifyBO message) {
         skuStockLockService.markerStockUse(message.getOrderIds());
     }
