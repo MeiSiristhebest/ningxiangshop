@@ -1,10 +1,15 @@
 # 宁享购 (Ningxiang Go) 企业级微服务电商系统
 
-[🇨🇳 中文](#-中文) | [🇺🇸 English Summary](#-english-summary)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge)](LICENSE)
+[![Java 21](https://img.shields.io/badge/Java-21_LTS-orange.svg?style=for-the-badge)](README.md)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.0-green.svg?style=for-the-badge)](README.md)
+[![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-Alibaba_2023.0.1.0-red.svg?style=for-the-badge)](README.md)
+
+[🇨🇳 中文](README.md) | [🇺🇸 English](README_EN.md)
 
 ---
 
-## 🇨🇳 中文
+## 📖 项目简介
 
 宁享购（Ningxiang Go）是一套基于 **Java 21**、**Spring Boot 3.3** 以及 **Vue 3** 体系构建的分布式微服务电商系统。项目聚焦于百万级高并发场景下的架构演进与优化，沉淀了核心鉴权下沉、多级缓存一致性保障、高并发防超卖分布式锁、通用幂等拦截框架以及 Sentinel 流量防护等生产级后端最佳实践，已通过全局编译打包测试（BUILD SUCCESS），具备 100% 容器化就绪生产力。
 
@@ -214,14 +219,6 @@ ningxiang
 
 ---
 
-## 🇺🇸 English Summary
+## 📜 许可证 (License)
 
-**Ningxiang Go (宁享购)** is an enterprise-grade distributed microservices e-commerce system built on **Java 21 (LTS)**, **Spring Boot 3.3**, and **Spring Cloud Alibaba**. 
-
-### Core Architectural Highlights
-- **Gateway Security Offloading**: Sa-Token reactive gateway filters offload JWT validation, reducing internal RPC authentication overhead to zero.
-- **Annotation-Driven Multi-Level Caching**: Caffeine JVM L1 cache + Redis L2 cache with RocketMQ broadcast eviction sync.
-- **Java 21 Virtual Threads**: Global enablement across Tomcat & thread pools for high I/O concurrency.
-- **Distributed Locking & Watchdog**: Ordered SKU locks preventing distributed deadlocks, backed by Redisson watchdog lease auto-renewal.
-- **AOP Idempotency Framework**: SpEL dynamic parsing with Redis 3-phase state control (`PROCESSING` -> `SUCCESS`).
-- **Sentinel High Availability**: Protection with Nacos rules persistence and fallback handling.
+基于 [Apache License 2.0](LICENSE) 开源协议。
