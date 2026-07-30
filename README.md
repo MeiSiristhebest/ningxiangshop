@@ -1,5 +1,11 @@
 # 宁享购 (Ningxiang Go) 企业级微服务电商系统
 
+[🇨🇳 中文](#-中文) | [🇺🇸 English Summary](#-english-summary)
+
+---
+
+## 🇨🇳 中文
+
 宁享购（Ningxiang Go）是一套基于 **Java 21**、**Spring Boot 3.3** 以及 **Vue 3** 体系构建的分布式微服务电商系统。项目聚焦于百万级高并发场景下的架构演进与优化，沉淀了核心鉴权下沉、多级缓存一致性保障、高并发防超卖分布式锁、通用幂等拦截框架以及 Sentinel 流量防护等生产级后端最佳实践，已通过全局编译打包测试（BUILD SUCCESS），具备 100% 容器化就绪生产力。
 
 ---
@@ -205,3 +211,17 @@ ningxiang
 2.  `ningxiang-auth` (认证中心)
 3.  `ningxiang-gateway` (统一网关，服务端口：`8000`)
 4.  其他业务微服务（`ningxiang-product`、`ningxiang-user`、`ningxiang-order` 等）
+
+---
+
+## 🇺🇸 English Summary
+
+**Ningxiang Go (宁享购)** is an enterprise-grade distributed microservices e-commerce system built on **Java 21 (LTS)**, **Spring Boot 3.3**, and **Spring Cloud Alibaba**. 
+
+### Core Architectural Highlights
+- **Gateway Security Offloading**: Sa-Token reactive gateway filters offload JWT validation, reducing internal RPC authentication overhead to zero.
+- **Annotation-Driven Multi-Level Caching**: Caffeine JVM L1 cache + Redis L2 cache with RocketMQ broadcast eviction sync.
+- **Java 21 Virtual Threads**: Global enablement across Tomcat & thread pools for high I/O concurrency.
+- **Distributed Locking & Watchdog**: Ordered SKU locks preventing distributed deadlocks, backed by Redisson watchdog lease auto-renewal.
+- **AOP Idempotency Framework**: SpEL dynamic parsing with Redis 3-phase state control (`PROCESSING` -> `SUCCESS`).
+- **Sentinel High Availability**: Protection with Nacos rules persistence and fallback handling.
