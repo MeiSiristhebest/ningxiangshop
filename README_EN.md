@@ -268,7 +268,7 @@ git push origin feat/your-feature
 | **Database Plaintext Passwords** | All database connection strings distributed via Nacos Config Center; production environment enables encryption plugins |
 | **Sentinel Rule Disclosure** | All Fallback intercepts raw exception stacks; never exposes underlying error details to frontend |
 
-**Vulnerability disclosure**: Report security issues directly to **`ningxiangshop-security [at] googlegroups [dot] com`** — do not file a public issue. We commit to a **first response within 24 hours** and a fix assessment with progress within 7 business days.
+**Vulnerability disclosure**: Report security issues directly to **`maox_neta@foxmail.com`** — do not file a public issue. We commit to a **first response within 24 hours** and a fix assessment with progress within 7 business days.
 
 ---
 

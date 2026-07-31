@@ -268,7 +268,7 @@ git push origin feat/your-feature
 | **数据库明文密码** | 所有数据库连接串通过 Nacos 配置中心下发，生产环境启用加密插件 |
 | **Sentinel 规则外泄** | 所有 Fallback 拦截原始异常堆栈，不向前端暴露底层报错细节 |
 
-**漏洞上报**：发现安全问题请直接发邮件至 **`ningxiang-security [at] googlegroups [dot] com`**，不要公开在 Issue 里。承诺 **24 小时内首次响应**，7 个工作日内给出修复评估与进度。
+**漏洞上报**：发现安全问题请直接发邮件至 **`maox_neta@foxmail.com`**，不要公开在 Issue 里。承诺 **24 小时内首次响应**，7 个工作日内给出修复评估与进度。
 
 ---
 
