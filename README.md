@@ -1,134 +1,150 @@
 # 宁享购 (Ningxiang Go) 企业级微服务电商系统
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge)](LICENSE)
-[![Java 21](https://img.shields.io/badge/Java-21_LTS-orange.svg?style=for-the-badge)](README.md)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.0-green.svg?style=for-the-badge)](README.md)
-[![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-Alibaba_2023.0.1.0-red.svg?style=for-the-badge)](README.md)
+[![Java 21](https://img.shields.io/badge/Java-21_LTS-orange.svg?style=for-the-badge)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.0-green.svg?style=for-the-badge)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-Alibaba_2023.0.1.0-red.svg?style=for-the-badge)](https://spring.io/projects/spring-cloud)
 
 [🇨🇳 中文](README.md) | [🇺🇸 English](README_EN.md)
 
 ---
 
-## 📖 项目简介
+## 📑 目录
 
-宁享购（Ningxiang Go）是一套基于 **Java 21**、**Spring Boot 3.3** 以及 **Vue 3** 体系构建的分布式微服务电商系统。项目聚焦于百万级高并发场景下的架构演进与优化，沉淀了核心鉴权下沉、多级缓存一致性保障、高并发防超卖分布式锁、通用幂等拦截框架以及 Sentinel 流量防护等生产级后端最佳实践，已通过全局编译打包测试（BUILD SUCCESS），具备 100% 容器化就绪生产力。
+- [项目简介](#-项目简介)
+- [微服务核心架构设计与工程实践](#-微服务核心架构设计与工程实践-architecture--design)
+- [后端微服务模块构成](#-后端微服务模块构成-comningxiangshop)
+- [核心技术选型](#-核心技术选型)
+- [编译与打包验证](#-编译与打包验证compilation-and-packaging-verification)
+- [快速启动指南](#-快速启动指南)
+- [参与贡献](#-参与贡献)
+- [安全说明](#-安全说明)
+- [许可证](#-许可证license)
 
 ---
 
-## 🛠️ 微服务核心架构设计与工程实践 (Architecture & Design)
+## 🧾 项目简介
 
-本文主要分享“宁享购”微服务商城的底层核心技术选型、高并发场景下的痛点思考及对应的工程解决方案。以下架构模块均在本项目中进行了完整的实现与落地，点击对应模块中的源码直链，即可查阅底层的核心代码实现细节：
+**宁享购 (Ningxiang Go)** 是一套基于 **Java 21 (LTS)**、**Spring Boot 3.3**、**Spring Cloud Alibaba 2023**、**Vue 3** 打造的、面向百万 QPS 高并发业务场景的生产级分布式微服务电商系统。
 
-### 1. 统一网关鉴权下沉与零 RPC 鉴权设计 (Gateway Security) 🛡️
+完整沉淀了 API 网关安全卸载、注解驱动多级缓存一致性、看门狗自动续期防超卖分布式锁、SpEL 切面幂等防重、Sentinel 熔断降级等一系列电商生产级后端最佳实践，并全量通过编译打包验证（`BUILD SUCCESS`），开箱 100% 可容器化部署。
 
-*   **架构演进与思考**：将原本“业务微服务每次请求都需通过 Feign 远程调用认证中心校验 Token”的旧有模式进行重构。全部鉴权拦截统一置于网关层（响应式 Reactor 过滤器），网关校验通过后提取 Sa-Session 缓存在 Redis 中的用户数据，JSON 序列化并进行 URL 编码后，放入 `x-user-info` 请求头传递给下游。业务微服务仅需从请求头中解码即可，**内网鉴权 RPC 交互开销降为 0**。
-*   **时序原理图**：
+---
+
+## 🏗️ 微服务核心架构设计与工程实践 (Architecture & Design)
+
+本节依次展开 7 大核心工程能力的选型、取舍与落地实现，所有源码均提供直达链接可审阅：
+
+### 1. 网关安全卸载 & 零 RPC 认证 🛡️
+
+*   **架构演进**：传统每个微服务都发起 Feign 远程调用到认证中心校验 Token，链路开销巨大。宁享购将认证过滤器统一前置到 API 网关（Reactive Reactor 过滤器），网关在 Token 校验后把 Redis 中缓存的 Sa-Session 用户数据 JSON 序列化并 URL 编码后通过 `x-user-info` 请求头透传给下游，业务微服务仅做一次 Header 解码即完成登录态注入，**内部鉴权 RPC 开销降为 0**。
+*   **时序流程**：
 ```mermaid
 sequenceDiagram
     actor Client as 客户端
-    participant Gateway as 宁享购网关 (ningxiang-gateway)
-    participant Auth as 认证中心 (ningxiang-auth)
-    participant Service as 业务微服务 (如 ningxiang-order)
+    participant Gateway as "宁享购网关<br/>(ningxiang-gateway)"
+    participant Auth as "认证中心<br/>(ningxiang-auth)"
+    participant Service as "业务微服务<br/>(如 ningxiang-order)"
 
-    Client->>Gateway: 带着 JWT Token 发起 HTTP 请求
-    Note over Gateway: SaTokenConfig 匹配过滤网关路由
-    Gateway-->>Gateway: SaReactorFilter 拦截校验 Token 真实性
-    Gateway-->>Gateway: 提取关联的 Sa-Session (用户信息)
-    Note over Gateway: GlobalAuthFilter 序列化并 URL 编码
-    Gateway->>Service: 路由转发 (携带 x-user-info 请求头)
-    Note over Service: AuthFilter 拦截 Header 解码并填充 ThreadLocal
-    Service-->>Client: 快速处理响应 (0次内网 Feign 调用!)
+    Client->>Gateway: 发起带 JWT Token 的 HTTP 请求
+    Note over Gateway: SaTokenConfig 匹配路由规则
+    Gateway-->>Gateway: SaReactorFilter 拦截并校验 Token
+    Gateway-->>Gateway: 从 Redis 提取关联 Sa-Session (用户数据)
+    Note over Gateway: GlobalAuthFilter 序列化 + URL 编码用户 Payload
+    Gateway->>Service: 转发请求 (携带 x-user-info 透传头)
+    Note over Service: AuthFilter 解码 Header 并注入 ThreadLocal
+    Service-->>Client: 快速响应业务逻辑 (全程 0 次内部 Feign 调用!)
 ```
-*   **📂 核心源码直链**：
-    - [SaTokenConfig.java (网关路由前置鉴权)](ningxiang-gateway/src/main/java/com/ningxiang/shop/gateway/config/SaTokenConfig.java)
-    - [GlobalAuthFilter.java (网关用户信息序列化及向下透传过滤器)](ningxiang-gateway/src/main/java/com/ningxiang/shop/gateway/filter/GlobalAuthFilter.java)
-    - [AuthFilter.java (业务微服务侧轻量级免 Feign 身份解码过滤器)](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/filter/AuthFilter.java)
-    - [TokenStore.java (认证中心 Sa-Token JWT 无状态登录颁发管理器)](ningxiang-auth/src/main/java/com/ningxiang/shop/auth/manager/TokenStore.java)
+*   **📂 源码直达**：
+    - [SaTokenConfig.java (网关路由安全过滤器)](ningxiang-gateway/src/main/java/com/ningxiang/shop/gateway/config/SaTokenConfig.java)
+    - [GlobalAuthFilter.java (网关用户信息序列化透传过滤器)](ningxiang-gateway/src/main/java/com/ningxiang/shop/gateway/filter/GlobalAuthFilter.java)
+    - [AuthFilter.java (业务侧轻量 Header 解码过滤器)](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/filter/AuthFilter.java)
+    - [TokenStore.java (认证中心无状态 JWT 令牌管理器)](ningxiang-auth/src/main/java/com/ningxiang/shop/auth/manager/TokenStore.java)
 
 ---
 
-### 2. 注解驱动的多级缓存架构与一致性同步方案 (Multi-Level Caching) 🚀
+### 2. 注解驱动多级缓存 + 一致性同步 🚀
 
-*   **架构演进与思考**：大促高并发下，频繁 of Redis 网络 I/O 是核心响应慢的瓶颈。本项目自定义了符合 Spring 缓存抽象的 `MultilevelCacheManager`。本地 JVM 缓存 Caffeine 充当一级缓存，远程 Redis 充当二级缓存。读取时优先击中 Caffeine（微秒级响应），未命中再读取 Redis 并回写本地。当后台修改商品或执行缓存失效时，除了清理 Redis，还会向 RocketMQ 广播清除通知，集群中所有部署的微服务实例监听到广播后，自动擦除本地 Caffeine，**一致性同步开销降至最低**。
-*   **缓存同步链路图**：
+*   **架构演进**：高并发商品查询场景 Redis 网络 I/O 是瓶颈。宁享购自研 **Spring Cache 规范**兼容的 `MultilevelCacheManager`：本地 JVM Caffeine 作为 L1 缓存（微秒级命中），远端 Redis 作为 L2 缓存。查询优先命中 Caffeine，未命中再回源 Redis；当商品变更触发缓存清理时，先清理 Redis，再通过 RocketMQ 广播一条失效通知，**所有微服务实例监听并清理本地 Caffeine**，以最小化一致性同步开销。
+*   **一致性同步流程图**：
 ```mermaid
 graph TD
-    A[外部并发查询] --> B{一级本地缓存 Caffeine}
-    B -- 命中: 微秒级返回 --> C[客户端]
-    B -- 未命中 --> D{二级分布式缓存 Redis}
-    D -- 命中: 回写 Caffeine 并返回 --> C
-    D -- 未命中 --> E[(MySQL 数据库回源)]
-    E --> F[写回 Redis + 写回 Caffeine] --> C
-    
-    G[商品后台数据修改] --> H(数据库修改)
-    H --> I[清除二级 Redis 缓存]
-    I --> J[Caffeine 本地 evict]
-    J --> K[广播 RocketMQ 消息: PRODUCT_CACHE_SYNC_TOPIC]
-    K --> L[微服务实例节点 1] --> M[清除本地 JVM 缓存]
-    K --> N[微服务实例节点 2] --> O[清除本地 JVM 缓存]
-    K --> P[微服务实例节点 3] --> Q[清除本地 JVM 缓存]
+    A["海量并发查询"] --> B{"L1 本地缓存 Caffeine"}
+    B -- "命中 → 微秒返回" --> C["客户端"]
+    B -- "未命中" --> D{"L2 分布式缓存 Redis"}
+    D -- "命中 → 回写 Caffeine 并返回" --> C
+    D -- "未命中" --> E[("MySQL 数据库回源")]
+    E --> F["写回 Redis + Caffeine"] --> C
+
+    G["后台管理员编辑商品"] --> H("更新数据库")
+    H --> I["清理 L2 Redis 缓存"]
+    I --> J["清理本地 Caffeine"]
+    J --> K["RocketMQ 广播消息 PRODUCT_CACHE_SYNC_TOPIC"]
+    K --> L["服务节点 1"] --> M["清理本地 JVM 缓存"]
+    K --> N["服务节点 2"] --> O["清理本地 JVM 缓存"]
+    K --> P["服务节点 3"] --> Q["清理本地 JVM 缓存"]
 ```
-*   **📂 核心源码直链**：
-    - [MultilevelCache.java (自定义双级缓存容器实现)](ningxiang-product/src/main/java/com/ningxiang/shop/product/config/MultilevelCache.java)
-    - [MultilevelCacheManager.java (注解级多级缓存管理器)](ningxiang-product/src/main/java/com/ningxiang/shop/product/config/MultilevelCacheManager.java)
-    - [MultilevelCacheConfig.java (多级缓存 Spring 自动化装配)](ningxiang-product/src/main/java/com/ningxiang/shop/product/config/MultilevelCacheConfig.java)
-    - [ProductCacheSyncListener.java (基于 RocketMQ 广播模式的本地缓存集群同步清理监听器)](ningxiang-product/src/main/java/com/ningxiang/shop/product/listener/ProductCacheSyncListener.java)
+*   **📂 源码直达**：
+    - [MultilevelCache.java (二级缓存容器实现)](ningxiang-product/src/main/java/com/ningxiang/shop/product/config/MultilevelCache.java)
+    - [MultilevelCacheManager.java (注解驱动缓存管理器)](ningxiang-product/src/main/java/com/ningxiang/shop/product/config/MultilevelCacheManager.java)
+    - [MultilevelCacheConfig.java (Spring 自动装配配置)](ningxiang-product/src/main/java/com/ningxiang/shop/product/config/MultilevelCacheConfig.java)
+    - [ProductCacheSyncListener.java (RocketMQ 广播缓存失效监听器)](ningxiang-product/src/main/java/com/ningxiang/shop/product/listener/ProductCacheSyncListener.java)
 
 ---
 
-### 3. Java 21 虚拟线程全局落地与 I/O 吞吐演进 (Virtual Threads) ⚡
+### 3. Java 21 虚拟线程 & 高 I/O 吞吐优化 ⚡
 
-*   **架构演进与思考**：在高 I/O 阻塞的微服务通信和交易场景下，Tomcat 容器和 TaskExecutor 底层的传统重量级物理线程池在高并发请求下会导致严重的内核线程上下文切换开销。项目基于 JDK 21 LTS 运行，开启了虚拟线程支持。Tomcat 会自动使用虚拟线程（每个仅占几百字节）处理请求，极大地提升了系统的并发处理能力和网络吞吐率，有效平滑了 JVM 线程的内存抖动。
-*   **📂 核心配置直链**：
-    - [bootstrap.yml (网关本地虚拟线程开启配置)](ningxiang-gateway/src/main/resources/bootstrap.yml#L3-L6) (配置有 `spring.threads.virtual.enabled: true`)
-    - 其余 11 个业务微服务的 `bootstrap.yml` 中均已在 `spring:` 节点下全局注入并激活了此项高并发加速配置。
-
----
-
-### 4. 动态多数据源读写分离与分布式事务一致性 (Database Router & Seata) 🗄️
-
-*   **架构演进与思考**：
-    - **读写分离**：数据库模块集成了动态数据源组件，微服务在代码层面可以通过 `@DS("master")` 与 `@DS("slave")` 切换不同的数据源，从而支持在代码或代理层将耗时的 Select 查询导流到只读从库，实现物理读写分离。
-    - **分布式事务**：在跨模块交易中（如创建订单扣减库存），通过 Seata 全局事务管理器保持强一致性，通过 Feign 拦截器在 RPC 调用中透传 XID，确保即使在网络分区或异常发生时，分布式数据库状态也能实现最终一致性。
-*   **📂 核心源码直链**：
-    - [SeataRequestInterceptor.java (Seata 事务 ID 微服务间 Feign 传输拦截器)](ningxiang-common/ningxiang-common-database/src/main/java/com/ningxiang/shop/common/database/config/SeataRequestInterceptor.java)
-    - [pom.xml (多数据源及分页依赖装配)](ningxiang-common/ningxiang-common-database/pom.xml#L35-L42)
+*   **架构演进**：传统 Tomcat 容器的重 OS 内核线程池，在高 I/O 业务峰下内核态上下文切换开销巨大。宁享购全站运行在 JDK 21 LTS，`spring.threads.virtual.enabled: true` 全局启用虚拟线程，Tomcat 按请求自动分配重量仅数百字节的虚拟线程，**显著提升网络吞吐**与 JVM 堆平滑度。
+*   **📂 配置直达**：
+    - [bootstrap.yml (网关虚拟线程配置)](ningxiang-gateway/src/main/resources/bootstrap.yml#L3-L6)
+    - 全部 11 个业务微服务均在 `bootstrap.yml` 中全局启用虚拟线程。
 
 ---
 
-### 5. 多 SKU 并发库存加锁防死锁优化与租约续期 (Distributed Locking & Watchdog) 🔒
+### 4. 动态多数据源读写分离 + Seata 分布式事务 🗄️
 
-*   **设计背景与痛点**：高并发大促场景下，多 SKU 订单的锁定由于不同线程加锁顺序不一致（如订单 A 锁 sku1, sku2；订单 B 并发锁 sku2, sku1），极易诱发**分布式死锁**。
-*   **工程解决方案**：
-    - **物理加锁顺序规整**：在执行锁定前，对传入的 SKU ID 列表进行**升序排序**，确保所有并发线程加锁的物理顺序完全一致，打破死锁的“循环等待”判定条件。
-    - **Watchdog 租约自动续期**：使用 Redisson 锁（不设定具体的锁过期时间，由看门狗机制接管），每 10 秒对锁的有效时间自动续期。这规避了因网络延迟、长事务或 JVM 垃圾回收导致锁提前释放，进而发生商品超卖的并发隐患。
-*   **📂 核心源码直链**：
-    - [SkuStockLockServiceImpl.java (防死锁分布式锁核心实现)](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L91-L177)
-
----
-
-### 6. 通用 AOP 幂等防重组件（基于 SpEL 动态解析与 Redis 状态机） (Idempotency Framework) 🛡️
-
-*   **设计背景与痛点**：微服务架构下，由于 RocketMQ 消息网络抖动重复投递、前端重复点击导致的数据脏污频发。传统的在业务层写 `select count(*)` 校验既不够优雅，又存在“读写时间差”导致的并发穿透风险。
-*   **工程解决方案**：
-    - **无侵入 AOP & SpEL 动态提取**：抽象出通用的 `@Idempotent` 幂等防重注解。切面内部基于 Spring EL（SpEL）解析器，动态获取方法入参中的业务主键（如订单ID、支付通知流水号）。
-    - **Redis 三阶段状态控制**：利用 Redis `SETNX` 占位将对应的 Token 标记为 `PROCESSING` 状态，占位失败即代表重复提交并直接拦截；业务方法执行成功后置为 `SUCCESS` 并设置合理的 TTL（防止短时间内重复请求）；业务若执行失败或抛出异常，则主动删除对应 Key 释放重试。
-*   **📂 核心源码直链**：
-    - [Idempotent.java (防重幂等注解声明)](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/annotation/Idempotent.java)
-    - [IdempotentAspect.java (SpEL 解析与 Redis 状态管理切面)](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/aspect/IdempotentAspect.java)
-    - [OrderNotifyStockConsumer.java (消费端动态解析拦截实践)](ningxiang-product/src/main/java/com/ningxiang/shop/product/listener/OrderNotifyStockConsumer.java#L21-L28)
+*   **架构演进**：
+    - **读写分离**：各微服务通过 `@DS("master")` 与 `@DS("slave")` 注解动态路由数据源，把商品、订单、支付等高频查询负载压到只读从库，实现物理读写解耦。
+    - **分布式事务**：跨模块事务（如下单同时扣库存）由 Seata 全局事务管理器（AT/TCC 模式）驱动，Feign 远程调用通过拦截器传播 XID，**跨网络分区保证最终一致性**。
+*   **📂 源码直达**：
+    - [SeataRequestInterceptor.java (Seata XID Feign 透传拦截器)](ningxiang-common/ningxiang-common-database/src/main/java/com/ningxiang/shop/common/database/config/SeataRequestInterceptor.java)
+    - [pom.xml (动态数据源依赖)](ningxiang-common/ningxiang-common-database/pom.xml#L35-L42)
 
 ---
 
-### 7. Sentinel 微服务核心链路流控与 Nacos 规则持久化 (High Availability & Fault Tolerance) 🚦
+### 5. 多 SKU 并发加锁 & 死锁规避 + 看门狗续期 🔒
 
-*   **设计背景与痛点**：库存锁定、订单结算等接口处于高载链路。若没有妥善的流量保护，一旦被上游流量突增冲垮，就会引发级联故障。而原生的 Sentinel 规则直接保存在内存中，服务重启即丢失。
-*   **工程解决方案**：
-    - **限流熔断埋点与 Fallback**：使用 `@SentinelResource` 保护库存锁定 API。在并发峰值超限时，通过 `BlockHandler` 直接返回排队重试响应，并在 `Fallback` 中拦截并规避系统底层报错的外泄。
-    - **Nacos 规则源动态拉取与持久化**：在本地 `bootstrap.yml` 中配置 Sentinel 的 Nacos 数据源，将其与配置中心 Nacos 规则双向桥接。流控与熔断降级规则由 Nacos 统一存储和下发，彻底解决了生产环境下规则重启丢失的痛点。
-*   **📂 核心源码直链**：
-    - [SkuStockLockServiceImpl.java (流量防护与 Fallback 降级实现)](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L90-L190)
-    - [bootstrap.yml (Sentinel 控制台与 Nacos 数据源桥接)](ningxiang-product/src/main/resources/bootstrap.yml#L23-L35)
+*   **痛点**：多 SKU 订单锁库存操作如果加锁顺序不一致（A 锁 SKU1 → SKU2；B 锁 SKU2 → SKU1），**极易触发分布式死锁**。
+*   **工程解**：
+    - **物理锁序归一化**：加锁前对所有 SKU ID 做 **升序排序**，保证所有并发线程按完全一致的物理顺序拿锁，**破坏环路等待条件**。
+    - **Redisson 看门狗自动续期**：基于 Redisson 实现分布式锁，启用 10 秒一次看门狗续期，**杜绝长事务/GC 卡顿造成的锁提前释放**，从机制上消除库存超卖。
+*   **📂 源码直达**：
+    - [SkuStockLockServiceImpl.java (防死锁加锁实现)](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L91-L177)
+
+---
+
+### 6. 通用 AOP 幂等框架（SpEL 解析 + Redis 状态机）🛡️
+
+*   **痛点**：RocketMQ 网络重试与前端重复点击造成数据重复；传统 `select count(*)` 先查后写存在读写间隙竞态。
+*   **工程解**：
+    - **零侵入 AOP + SpEL 动态解析**：自定义 `@Idempotent` 注解，切面通过 Spring 表达式语言 (SpEL) 动态提取业务主键（订单号、支付流水号等）。
+    - **Redis 三阶段状态控制**：Redis `SETNX` 抢占 `PROCESSING` 中状态，成功执行业务则写入 `SUCCESS` 状态并设置 TTL；异常则主动删除 Key 以释放合法重试机会。
+*   **📂 源码直达**：
+    - [Idempotent.java (幂等注解声明)](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/annotation/Idempotent.java)
+    - [IdempotentAspect.java (SpEL + Redis 状态机切面)](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/aspect/IdempotentAspect.java)
+    - [OrderNotifyStockConsumer.java (MQ 消费端幂等拦截)](ningxiang-product/src/main/java/com/ningxiang/shop/product/listener/OrderNotifyStockConsumer.java#L21-L28)
+
+---
+
+### 7. Sentinel 熔断限流 + Nacos 规则持久化 🚦
+
+*   **痛点**：锁库存、支付结算等高负载接口需要熔断保护，Sentinel 默认内存规则重启即丢失。
+*   **工程解**：
+    - **流量控制 + Fallback**：核心 API 通过 `@SentinelResource` 防护，突发峰值触发 `BlockHandler` 排队重试，运行时异常进入 `Fallback` 兜底。
+    - **Nacos 规则源持久化**：通过 `bootstrap.yml` 将 Sentinel 数据源接入 Nacos 配置中心，**规则由 Nacos 统一管理并动态下发，重启不丢失**。
+*   **📂 源码直达**：
+    - [SkuStockLockServiceImpl.java (Sentinel 限流保护 + Fallback)](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L90-L190)
+    - [bootstrap.yml (Sentinel 接入 Nacos 数据源)](ningxiang-product/src/main/resources/bootstrap.yml#L23-L35)
 
 ---
 
@@ -136,43 +152,43 @@ graph TD
 
 ```
 ningxiang
-├─ningxiang-api -- 微服务间内网 RPC 声明接口 (auth, product, order, user等)
-├─ningxiang-auth -- 统一授权登录校验服务
-├─ningxiang-biz -- 通用业务支撑服务（图片存储、短信网关等）
-├─ningxiang-gateway -- 微服务统一网关（Sa-Token 响应式网关鉴权）
-├─ningxiang-leaf -- 基于美团 Leaf 算法的分布式主键生成器
+├─ningxiang-api -- 跨服务 RPC 接口层 (auth, product, order, user 等)
+├─ningxiang-auth -- 统一鉴权认证中心服务
+├─ningxiang-biz -- 业务配套服务 (对象图片存储、短信网关等)
+├─ningxiang-gateway -- API 统一网关入口 (Sa-Token Reactive 网关安全)
+├─ningxiang-leaf -- 分布式主键号段生成服务 (美团 Leaf 算法)
 ├─ningxiang-multishop -- 商家端业务微服务
-├─ningxiang-platform -- 运营管理端业务微服务
-├─ningxiang-product -- 商品与多级缓存服务
-├─ningxiang-order -- 订单与交易流程服务
-├─ningxiang-payment -- 聚合支付服务
-├─ningxiang-rbac -- 角色及菜单权限控制服务
-├─ningxiang-search -- 基于 ElasticSearch + Canal 的搜索引擎服务
-├─ningxiang-user -- 用户资产与会员服务
-└─ningxiang-common -- 核心公共依赖与架构抽象组件
+├─ningxiang-platform -- 平台运营管理端业务微服务
+├─ningxiang-product -- 商品服务 + 多级缓存实现
+├─ningxiang-order -- 订单与事务服务
+├─ningxiang-payment -- 支付聚合服务
+├─ningxiang-rbac -- 角色 / 菜单权限管理服务
+├─ningxiang-search -- 搜索引擎服务 (ElasticSearch + Canal binlog 同步)
+├─ningxiang-user -- 用户账号与会员服务
+└─ningxiang-common -- 核心公共依赖与基础组件
 ```
 
 ---
 
 ## 📊 核心技术选型
 
-*   **开发语言**：Java 21 (LTS)
-*   **微服务基座**：Spring Boot 3.3.0 + Spring Cloud 2023.0.1 + Spring Cloud Alibaba 2023.0.1.0
-*   **注册/配置中心**：Nacos 2.3.2
-*   **安全与鉴权**：Sa-Token 1.38.0 + sa-token-jwt (无状态 JWT 模式)
-*   **分布式事务**：Seata 2.0.0 (AT/TCC 模式)
+*   **开发语言**：Java 21 LTS
+*   **微服务框架**：Spring Boot 3.3.0 + Spring Cloud 2023.0.1 + Spring Cloud Alibaba 2023.0.1.0
+*   **注册 / 配置中心**：Nacos 2.3.2
+*   **安全与认证**：Sa-Token 1.38.0 + sa-token-jwt（无状态 JWT 模式）
+*   **分布式事务**：Seata 2.0.0（AT + TCC 双模式）
 *   **消息队列**：RocketMQ 5.x
-*   **一级缓存**：Caffeine 3.x
-*   **二级缓存**：Redis 7.x + Jackson 序列化
-*   **多数据源组件**：dynamic-datasource 4.3.0 (MySQL 读写分离配置支持)
+*   **L1 进程内缓存**：Caffeine 3.x
+*   **L2 分布式缓存**：Redis 7.x + Jackson 序列化
+*   **多数据源**：dynamic-datasource 4.3.0（MySQL 读写分离）
 *   **数据库**：MySQL 8.0 + MyBatis / MyBatis-Plus
-*   **前端框架**：Vue 3 + Vite 5 + TS + Element Plus
+*   **前端工程**：Vue 3 + Vite 5 + TypeScript + Element Plus
 
 ---
 
-## 📦 编译与打包验证 (Compilation and Packaging Verification)
+## 📦 编译与打包验证（Compilation and Packaging Verification）
 
-项目全局已通过 `mvn clean package -DskipTests` 的测试打包，各微服务模块均能完美编译打包出可执行二进制包，控制台真实构建输出如下：
+项目已通过 `mvn clean package -DskipTests` 全量编译，真实构建输出节选如下：
 
 ```bash
 [INFO] Reactor Summary for ningxiang 1.0-SNAPSHOT:
@@ -219,6 +235,43 @@ ningxiang
 
 ---
 
+## 🤝 参与贡献
+
+欢迎贡献代码。简要流程：
+
+```bash
+# 1. Fork → Clone → 切分支
+git checkout -b feat/your-feature
+
+# 2. 全量编译打包（必须通过 BUILD SUCCESS）
+mvn clean package -DskipTests
+
+# 3. Commit 并提 PR
+git commit -m "feat: your change"
+git push origin feat/your-feature
+```
+
+**欢迎贡献的方向**：
+- 🧪 补充各微服务的单元测试与集成测试
+- 🧩 引入新的高可用 / 可观测性组件（SkyWalking、Grafana 等）
+- 🧹 优化现有实现或修复 Issue
+
+---
+
+## 🔒 安全说明
+
+| 风险场景 | 防护措施 |
+|---------|---------|
+| **JWT Token 伪造** | Sa-Token JWT 无状态签名校验；Token Store 统一颁发；服务重启即时失效 |
+| **支付回调伪造** | `@Idempotent` 幂等切面 + 签名校验 + 支付流水号唯一约束 |
+| **分布式锁提前释放** | Redisson Watchdog 自动续期；业务失败主动删除幂等 Key |
+| **数据库明文密码** | 所有数据库连接串通过 Nacos 配置中心下发，生产环境启用加密插件 |
+| **Sentinel 规则外泄** | 所有 Fallback 拦截原始异常堆栈，不向前端暴露底层报错细节 |
+
+**漏洞上报**：发现安全问题请直接发邮件至 **`ningxiang-security [at] googlegroups [dot] com`**，不要公开在 Issue 里。承诺 **24 小时内首次响应**，7 个工作日内给出修复评估与进度。
+
+---
+
 ## 📜 许可证 (License)
 
-基于 [Apache License 2.0](LICENSE) 开源协议。
+基于 **Apache License 2.0** 开源协议。详见 [LICENSE](LICENSE) 文件。

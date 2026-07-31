@@ -1,11 +1,25 @@
 # Ningxiang Go (宁享购) Enterprise Microservices E-Commerce System
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge)](LICENSE)
-[![Java 21](https://img.shields.io/badge/Java-21_LTS-orange.svg?style=for-the-badge)](README_EN.md)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.0-green.svg?style=for-the-badge)](README_EN.md)
-[![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-Alibaba_2023.0.1.0-red.svg?style=for-the-badge)](README_EN.md)
+[![Java 21](https://img.shields.io/badge/Java-21_LTS-orange.svg?style=for-the-badge)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.0-green.svg?style=for-the-badge)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-Alibaba_2023.0.1.0-red.svg?style=for-the-badge)](https://spring.io/projects/spring-cloud)
 
 [🇨🇳 中文](README.md) | [🇺🇸 English](README_EN.md)
+
+---
+
+## 📑 Table of Contents
+
+- [📖 Introduction](#-introduction)
+- [🛠️ Microservice Core Architecture & Engineering Design](#️-microservice-core-architecture--engineering-design)
+- [🛠️ Microservice Module Breakdown](#️-microservice-module-breakdown-comningxiangshop)
+- [📊 Core Technology Stack Matrix](#-core-technology-stack-matrix)
+- [📦 Compilation & Packaging Verification](#-compilation--packaging-verification)
+- [🏃 Quick Start Guide](#-quick-start-guide)
+- [🤝 Contributing](#-contributing)
+- [🔒 Security](#-security)
+- [📜 License](#-license)
 
 ---
 
@@ -28,9 +42,9 @@ This section highlights the technical selection, architectural trade-offs, and e
 ```mermaid
 sequenceDiagram
     actor Client as Client App
-    participant Gateway as Ningxiang Gateway (ningxiang-gateway)
-    participant Auth as Auth Center (ningxiang-auth)
-    participant Service as Business Service (e.g., ningxiang-order)
+    participant Gateway as "Ningxiang Gateway (ningxiang-gateway)"
+    participant Auth as "Auth Center (ningxiang-auth)"
+    participant Service as "Business Service (e.g., ningxiang-order)"
 
     Client->>Gateway: Issue HTTP request with JWT Token
     Note over Gateway: SaTokenConfig matches route rules
@@ -55,20 +69,20 @@ sequenceDiagram
 *   **Cache Synchronization Flowchart**:
 ```mermaid
 graph TD
-    A[Concurrent Query] --> B{L1 Local Cache Caffeine}
-    B -- Hit: Microsecond return --> C[Client]
-    B -- Miss --> D{L2 Distributed Cache Redis}
-    D -- Hit: Write back Caffeine & return --> C
-    D -- Miss --> E[(MySQL Database Fallback)]
-    E --> F[Write back Redis + Caffeine] --> C
-    
-    G[Product Admin Edit] --> H(Update Database)
-    H --> I[Purge L2 Redis Cache]
-    I --> J[Caffeine Local Evict]
-    J --> K[Broadcast RocketMQ Message: PRODUCT_CACHE_SYNC_TOPIC]
-    K --> L[Service Node 1] --> M[Evict Local JVM Cache]
-    K --> N[Service Node 2] --> O[Evict Local JVM Cache]
-    K --> P[Service Node 3] --> Q[Evict Local JVM Cache]
+    A["Concurrent Query"] --> B{"L1 Local Cache Caffeine"}
+    B -- "Hit: Microsecond return" --> C["Client"]
+    B -- "Miss" --> D{"L2 Distributed Cache Redis"}
+    D -- "Hit: Write back Caffeine & return" --> C
+    D -- "Miss" --> E[("MySQL Database Fallback")]
+    E --> F["Write back Redis + Caffeine"] --> C
+
+    G["Product Admin Edit"] --> H("Update Database")
+    H --> I["Purge L2 Redis Cache"]
+    I --> J["Caffeine Local Evict"]
+    J --> K["Broadcast RocketMQ Message: PRODUCT_CACHE_SYNC_TOPIC"]
+    K --> L["Service Node 1"] --> M["Evict Local JVM Cache"]
+    K --> N["Service Node 2"] --> O["Evict Local JVM Cache"]
+    K --> P["Service Node 3"] --> Q["Evict Local JVM Cache"]
 ```
 *   **📂 Direct Source Code Links**:
     - [MultilevelCache.java (Dual-Level Cache Container Implementation)](ningxiang-product/src/main/java/com/ningxiang/shop/product/config/MultilevelCache.java)
@@ -218,6 +232,43 @@ In your IDE, execute main application entry points in this order:
 2.  `ningxiang-auth` (Auth Center)
 3.  `ningxiang-gateway` (API Gateway, Port: `8000`)
 4.  Business microservices (`ningxiang-product`, `ningxiang-user`, `ningxiang-order`, etc.)
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome. Quick flow:
+
+```bash
+# 1. Fork → Clone → Branch
+git checkout -b feat/your-feature
+
+# 2. Full build verification (BUILD SUCCESS required)
+mvn clean package -DskipTests
+
+# 3. Commit and open a PR
+git commit -m "feat: your change"
+git push origin feat/your-feature
+```
+
+**Welcome contribution directions**:
+- 🧪 Add unit and integration tests for microservices
+- 🧩 Introduce new HA / observability components (SkyWalking, Grafana, etc.)
+- 🧹 Optimize existing implementations or fix issues
+
+---
+
+## 🔒 Security
+
+| Risk Scenario | Mitigation |
+|---------|---------|
+| **JWT Token Forgery** | Sa-Token JWT stateless signature verification; Token Store unified issuance; instant invalidation on service restart |
+| **Payment Callback Forgery** | `@Idempotent` aspect + signature verification + payment transaction ID unique constraint |
+| **Distributed Lock Premature Release** | Redisson Watchdog auto-renewal; proactive deletion of idempotent keys on business failure |
+| **Database Plaintext Passwords** | All database connection strings distributed via Nacos Config Center; production environment enables encryption plugins |
+| **Sentinel Rule Disclosure** | All Fallback intercepts raw exception stacks; never exposes underlying error details to frontend |
+
+**Vulnerability disclosure**: Report security issues directly to **`ningxiangshop-security [at] googlegroups [dot] com`** — do not file a public issue. We commit to a **first response within 24 hours** and a fix assessment with progress within 7 business days.
 
 ---
 
