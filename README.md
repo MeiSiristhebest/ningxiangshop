@@ -1,6 +1,6 @@
 # 宁享购 (Ningxiang Go) 企业级微服务电商系统
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=for-the-badge)](LICENSE)
 [![Java 21](https://img.shields.io/badge/Java-21_LTS-orange.svg?style=for-the-badge)](https://openjdk.org/projects/jdk/21/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.0-green.svg?style=for-the-badge)](https://spring.io/projects/spring-boot)
 [![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-Alibaba_2023.0.1.0-red.svg?style=for-the-badge)](https://spring.io/projects/spring-cloud)
@@ -274,4 +274,4 @@ git push origin feat/your-feature
 
 ## 📜 许可证 (License)
 
-基于 **Apache License 2.0** 开源协议。详见 [LICENSE](LICENSE) 文件。
+基于 **GNU Affero General Public License v3.0** 开源协议。详见 [LICENSE](LICENSE) 文件。
