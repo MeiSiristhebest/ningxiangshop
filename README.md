@@ -2,7 +2,7 @@
   Designed & Built with ❤️ by MeiSiristhebest (https://github.com/MeiSiristhebest)
   If this repository helps your learning or engineering, please consider dropping a ⭐ Star!
 -->
-# Ningxiang Go (宁享购) Enterprise Microservices E-Commerce System
+<h1 align="center">Ningxiang Go (宁享购)</h1>
 
 <p align="center">
   <b>English | <a href="./README_zh.md">简体中文</a></b>
@@ -12,23 +12,18 @@
 > 💡 **If this architecture, engineering implementation, or toolchain helps your learning or workflow, please drop a ⭐ Star!**
 > 📚 Explore the technical blueprint: [ARCHITECTURE.md](./ARCHITECTURE.md)
 
-
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=for-the-badge" alt="License" /></a>
-  <a href="https://openjdk.org/"><img src="https://img.shields.io/badge/Java-21_LTS-orange.svg?style=for-the-badge" alt="Java 21" /></a>
-  <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot-3.3.0-green.svg?style=for-the-badge" alt="Spring Boot" /></a>
-  <a href="https://spring.io/projects/spring-cloud"><img src="https://img.shields.io/badge/Spring_Cloud-Alibaba_2023.0.1.0-red.svg?style=for-the-badge" alt="Spring Cloud" /></a>
+  <b>Enterprise Microservices E-Commerce System · Java 21 LTS + Spring Boot 3 + Spring Cloud Alibaba + Vue 3</b>
 </p>
 
 <p align="center">
-  <a href="README.md">🇨🇳 中文</a> &nbsp;|&nbsp; <a href="README_EN.md">🇺🇸 English</a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat" alt="License: AGPL v3" /></a>
+  <a href="https://openjdk.org/"><img src="https://img.shields.io/badge/Java-21_LTS-ED8B00?style=flat&logo=openjdk&logoColor=white" alt="Java 21 LTS" /></a>
+  <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot-3.3.0-6DB33F?style=flat&logo=springboot&logoColor=white" alt="Spring Boot 3.3" /></a>
+  <a href="https://spring.io/projects/spring-cloud"><img src="https://img.shields.io/badge/Spring_Cloud-Alibaba-red.svg?style=flat" alt="Spring Cloud Alibaba" /></a>
 </p>
 
 ---
-
-<p align="center">
-  <strong>Enterprise Microservices E-Commerce · Java 21 + Spring Boot 3 + Spring Cloud Alibaba + Vue 3 · Production-Grade for 1M+ QPS</strong>
-</p>
 
 ## 📑 Table of Contents
 
