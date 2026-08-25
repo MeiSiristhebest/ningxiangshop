@@ -2,7 +2,7 @@
   Designed & Built with ❤️ by MeiSiristhebest (https://github.com/MeiSiristhebest)
   If this repository helps your learning or engineering, please consider dropping a ⭐ Star!
 -->
-# 宁享购 (Ningxiang Go) 企业级微服务电商系统
+<h1 align="center">宁享购 (Ningxiang Go)</h1>
 
 <p align="center">
   <b><a href="./README.md">English</a> | 简体中文</b>
@@ -12,24 +12,18 @@
 > 💡 **如果本项目的架构设计、工程实践或开源基础设施对您有所启发，欢迎点亮右上角 ⭐ Star 支持创作者！**
 > 📚 查阅核心架构设计文档：[ARCHITECTURE_zh.md](./ARCHITECTURE_zh.md)
 
-
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=for-the-badge" alt="License" /></a>
-  <a href="https://openjdk.org/projects/jdk/21/"><img src="https://img.shields.io/badge/Java-21_LTS-orange.svg?style=for-the-badge" alt="Java 21" /></a>
-  <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot-3.3.0-green.svg?style=for-the-badge" alt="Spring Boot" /></a>
-  <a href="https://spring.io/projects/spring-cloud"><img src="https://img.shields.io/badge/Spring_Cloud-Alibaba_2023.0.1.0-red.svg?style=for-the-badge" alt="Spring Cloud" /></a>
+  <b>企业级微服务电商系统 · Java 21 LTS + Spring Boot 3 + Spring Cloud Alibaba + Vue 3</b>
 </p>
 
 <p align="center">
-  <a href="README.md">🇨🇳 中文</a> &nbsp;|&nbsp; <a href="README_EN.md">🇺🇸 English</a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat" alt="License: AGPL v3" /></a>
+  <a href="https://openjdk.org/"><img src="https://img.shields.io/badge/Java-21_LTS-ED8B00?style=flat&logo=openjdk&logoColor=white" alt="Java 21 LTS" /></a>
+  <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot-3.3.0-6DB33F?style=flat&logo=springboot&logoColor=white" alt="Spring Boot 3.3" /></a>
+  <a href="https://spring.io/projects/spring-cloud"><img src="https://img.shields.io/badge/Spring_Cloud-Alibaba-red.svg?style=flat" alt="Spring Cloud Alibaba" /></a>
 </p>
-
 
 ---
-
-<p align="center">
-  <strong>企业级微服务电商系统 · Java 21 + Spring Boot 3 + Spring Cloud Alibaba + Vue 3 · 面向百万 QPS 高并发生产场景</strong>
-</p>
 
 ## 📑 目录
 
