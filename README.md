@@ -356,9 +356,12 @@ git push origin feat/your-feature
 
 If you find this project useful or inspiring, please consider giving it a ⭐ **Star** on GitHub! It helps more developers discover the work and supports continuous open-source maintenance.
 
-<p align="center">
-  <a href="https://star-history.com/#MeiSiristhebest/ningxiangshop&Date">
-    <img src="https://api.star-history.com/svg?repos=MeiSiristhebest/ningxiangshop&type=Date" alt="Star History Chart" width="100%" />
+<p align="left">
+  <a href="https://github.com/MeiSiristhebest/ningxiangshop/stargazers">
+    <img src="https://img.shields.io/github/stars/MeiSiristhebest/ningxiangshop?style=for-the-badge&logo=apachespark&color=f59e0b" alt="Stargazers" />
+  </a>
+  <a href="https://github.com/MeiSiristhebest/ningxiangshop/network/members">
+    <img src="https://img.shields.io/github/forks/MeiSiristhebest/ningxiangshop?style=for-the-badge&color=3b82f6" alt="Forks" />
   </a>
 </p>
 
