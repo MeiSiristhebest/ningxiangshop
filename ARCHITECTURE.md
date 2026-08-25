@@ -54,4 +54,4 @@ Replaces traditional platform thread pools with Java 21 virtual threads, boostin
 
 ---
 
-<sub>© 2026 Ningxiang Go. Licensed under the MIT License.</sub>
+<sub>© 2026 Ningxiang Go. Licensed under the AGPLv3 License.</sub>
