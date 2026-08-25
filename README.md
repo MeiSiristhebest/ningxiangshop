@@ -2,11 +2,20 @@
   Designed & Built with ❤️ by MeiSiristhebest (https://github.com/MeiSiristhebest)
   If this repository helps your learning or engineering, please consider dropping a ⭐ Star!
 -->
-# 宁享购 (Ningxiang Go) 企业级微服务电商系统
+# Ningxiang Go (宁享购) Enterprise Microservices E-Commerce System
+
+<p align="center">
+  <b>English | <a href="./README_zh.md">简体中文</a></b>
+</p>
+
+> [!TIP]
+> 💡 **If this architecture, engineering implementation, or toolchain helps your learning or workflow, please drop a ⭐ Star!**
+> 📚 Explore the technical blueprint: [ARCHITECTURE.md](./ARCHITECTURE.md)
+
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=for-the-badge" alt="License" /></a>
-  <a href="https://openjdk.org/projects/jdk/21/"><img src="https://img.shields.io/badge/Java-21_LTS-orange.svg?style=for-the-badge" alt="Java 21" /></a>
+  <a href="https://openjdk.org/"><img src="https://img.shields.io/badge/Java-21_LTS-orange.svg?style=for-the-badge" alt="Java 21" /></a>
   <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot-3.3.0-green.svg?style=for-the-badge" alt="Spring Boot" /></a>
   <a href="https://spring.io/projects/spring-cloud"><img src="https://img.shields.io/badge/Spring_Cloud-Alibaba_2023.0.1.0-red.svg?style=for-the-badge" alt="Spring Cloud" /></a>
 </p>
@@ -15,60 +24,56 @@
   <a href="README.md">🇨🇳 中文</a> &nbsp;|&nbsp; <a href="README_EN.md">🇺🇸 English</a>
 </p>
 
-> [!TIP]
-> 💡 **如果本项目的架构设计、工程实践或开源基础设施对您有所启发，欢迎点亮右上角 ⭐ Star 支持创作者！**
-> 📚 查阅核心架构推演：[ARCHITECTURE.md](./ARCHITECTURE.md)
-
 ---
 
 <p align="center">
-  <strong>企业级微服务电商系统 · Java 21 + Spring Boot 3 + Spring Cloud Alibaba + Vue 3 · 面向百万 QPS 高并发生产场景</strong>
+  <strong>Enterprise Microservices E-Commerce · Java 21 + Spring Boot 3 + Spring Cloud Alibaba + Vue 3 · Production-Grade for 1M+ QPS</strong>
 </p>
 
-## 📑 目录
+## 📑 Table of Contents
 
-- [项目简介](#-项目简介)
-- [核心功能](#-核心功能)
-- [环境要求](#-环境要求)
-- [安装与编译验证](#-安装与编译验证)
-- [快速启动指南](#-快速启动指南)
-- [配置说明](#-配置说明)
-- [微服务核心架构设计与工程实践](#-微服务核心架构设计与工程实践)
-- [后端微服务模块构成](#-后端微服务模块构成)
-- [核心技术选型](#-核心技术选型)
-- [参与贡献](#-参与贡献)
-- [安全说明](#-安全说明)
-- [许可证](#-许可证)
-
----
-
-## 📖 项目简介
-
-**宁享购 (Ningxiang Go)** 是一套基于 **Java 21 (LTS)**、**Spring Boot 3.3**、**Spring Cloud Alibaba 2023**、**Vue 3** 打造的、面向百万 QPS 高并发业务场景的生产级分布式微服务电商系统。
-
-完整沉淀了 API 网关安全卸载、注解驱动多级缓存一致性、看门狗自动续期防超卖分布式锁、SpEL 切面幂等防重、Sentinel 熔断降级等一系列电商生产级后端最佳实践，并全量通过编译打包验证（`BUILD SUCCESS`），开箱 100% 可容器化部署。
+- [Introduction](#-introduction)
+- [Features](#-features)
+- [Requirements](#-requirements)
+- [Installation and Build Verification](#-installation-and-build-verification)
+- [Quick Start Guide](#-quick-start-guide)
+- [Configuration](#-configuration)
+- [Microservice Core Architecture and Engineering Design](#-microservice-core-architecture-and-engineering-design)
+- [Microservice Module Breakdown](#-microservice-module-breakdown)
+- [Core Technology Stack](#-core-technology-stack)
+- [Contributing](#-contributing)
+- [Security](#-security)
+- [License](#-license)
 
 ---
 
-## ✨ 核心功能
+## 📖 Introduction
 
-- **网关安全卸载 & 零 RPC 认证**：认证过滤器前置到 API 网关，经 `x-user-info` 透传登录态，内部鉴权 RPC 开销降为 0。
-- **注解驱动多级缓存 + 一致性同步**：Caffeine（L1）+ Redis（L2）双层缓存，配合 RocketMQ 广播失效通知，保证集群缓存一致性。
-- **Java 21 虚拟线程**：`spring.threads.virtual.enabled: true` 全局启用虚拟线程，显著提升 I/O 吞吐与 JVM 堆平滑度。
-- **动态多数据源读写分离 + Seata 分布式事务**：`@DS` 注解路由读写库，Seata（AT/TCC）跨服务保证最终一致性。
-- **多 SKU 分布式锁 & 死锁规避**：SKU ID 升序归一化加锁 + Redisson 看门狗自动续期，从机制上消除库存超卖。
-- **通用 AOP 幂等框架**：`@Idempotent` 注解 + SpEL 解析 + Redis 三阶段状态机，防重复提交与 MQ 重试。
-- **Sentinel 熔断限流 & Nacos 规则持久化**：`@SentinelResource` 防护核心接口，规则统一由 Nacos 下发、重启不丢失。
+**Ningxiang Go (宁享购)** is a production-grade distributed microservices e-commerce system built on **Java 21 (LTS)**, **Spring Boot 3.3**, **Spring Cloud Alibaba 2023**, and **Vue 3**.
+
+Engineered specifically for high-concurrency environments handling 1,000,000+ QPS stress scenarios, the system encapsulates production-level backend best practices: API gateway security offloading, annotation-driven multi-level caching consistency, anti-overselling distributed locking with watchdog auto-renewal, custom SpEL-based AOP idempotency protection, and Sentinel fault-tolerance. Global compilation and packaging verification (`BUILD SUCCESS`) are fully passed, providing 100% containerization-ready deployment productivity.
 
 ---
 
-## 🔧 环境要求
+## ✨ Features
 
-| 依赖 | 版本 |
-|------|------|
+- **Gateway Security Offloading & Zero-RPC Authentication**: Authentication filters are pushed to the API gateway and login state is propagated via the `x-user-info` header, reducing internal auth RPC overhead to zero.
+- **Annotation-Driven Multi-Level Caching & Consistency Sync**: Caffeine (L1) + Redis (L2) two-tier caching, with RocketMQ broadcast invalidation guaranteeing cluster-wide cache consistency.
+- **Java 21 Virtual Threads**: `spring.threads.virtual.enabled: true` enables virtual threads globally, significantly improving I/O throughput and JVM heap smoothness.
+- **Dynamic Multi-DataSource Read/Write Splitting + Seata Distributed Transactions**: `@DS` annotations route read/write traffic; Seata (AT/TCC) guarantees eventual consistency across services.
+- **Multi-SKU Distributed Locking, Anti-Deadlock & Watchdog Auto-Renewal**: Ascending SKU-ID lock ordering plus Redisson watchdog renewal eliminates stock overselling by design.
+- **Universal AOP Idempotency Framework**: `@Idempotent` annotation + SpEL parsing + Redis 3-phase state machine prevents duplicate submissions and MQ retries.
+- **Sentinel Circuit Breaking & Nacos Rule Persistence**: `@SentinelResource` protects core endpoints; rules are centrally delivered by Nacos and survive restarts.
+
+---
+
+## 🔧 Requirements
+
+| Dependency | Version |
+|------------|---------|
 | JDK | 21 (LTS) |
 | Maven | 3.9+ |
-| Docker / Docker Compose | 最新稳定版 |
+| Docker / Docker Compose | Latest stable |
 | MySQL | 8.0 |
 | Redis | 7.x |
 | RocketMQ | 5.x |
@@ -77,9 +82,9 @@
 
 ---
 
-## 📦 安装与编译验证
+## 📦 Installation and Build Verification
 
-项目已通过 `mvn clean package -DskipTests` 全量编译，真实构建输出节选如下：
+The system has passed global compilation via `mvn clean package -DskipTests`. Real build output:
 
 ```bash
 [INFO] Reactor Summary for ningxiang 1.0-SNAPSHOT:
@@ -102,11 +107,11 @@
 
 ---
 
-## 🏃 快速启动指南
+## 🏃 Quick Start Guide
 
-### 1. 启动中间件
+### 1. Start Middleware Services
 
-推荐使用本地 Docker 容器快速拉起开发所需的各项中间件：
+Spin up local Docker containers for required middleware:
 
 - **MySQL 8.0**
 - **Redis 7.x**
@@ -114,30 +119,30 @@
 - **Nacos 2.x**
 - **Seata 2.0.0**
 
-### 2. 数据库与配置导入
+### 2. Import Database & Configs
 
-1. 创建 MySQL 数据库，将 [db/](db/) 目录下各模块对应的 SQL 脚本导入。
-2. 登录 Nacos 控制台（`http://localhost:8848/nacos`），将 [db/ningxiang_nacos.sql](db/ningxiang_nacos.sql) 中的配置表导入配置中心。
-3. 在 Nacos 的 `application-dev.yml` 配置中修改 MySQL 数据库连接、Redis 与 RocketMQ 地址。
+1. Import SQL scripts from [db/](db/) into MySQL.
+2. Log in to Nacos Console (`http://localhost:8848/nacos`) and import [db/ningxiang_nacos.sql](db/ningxiang_nacos.sql).
+3. Update MySQL, Redis, and RocketMQ connection strings in `application-dev.yml` inside Nacos.
 
-### 3. 微服务启动
+### 3. Launch Microservices
 
-在 IDE 中执行以下各模块的主启动类（`Application`）：
+In your IDE, execute main application entry points in this order:
 
-1. `ningxiang-leaf`（ID 生成服务）
-2. `ningxiang-auth`（认证中心）
-3. `ningxiang-gateway`（统一网关，服务端口：`8000`）
-4. 其他业务微服务（`ningxiang-product`、`ningxiang-user`、`ningxiang-order` 等）
+1. `ningxiang-leaf` (ID Generator)
+2. `ningxiang-auth` (Auth Center)
+3. `ningxiang-gateway` (API Gateway, Port: `8000`)
+4. Business microservices (`ningxiang-product`, `ningxiang-user`, `ningxiang-order`, etc.)
 
 ---
 
-## ⚙️ 配置说明
+## ⚙️ Configuration
 
-系统的运行配置统一通过 **Nacos 配置中心** 管理：
+Runtime configuration is managed centrally via the **Nacos Config Center**:
 
-- 将 [db/ningxiang_nacos.sql](db/ningxiang_nacos.sql) 中的配置表导入 Nacos 后，于 `application-dev.yml` 中维护 MySQL、Redis、RocketMQ 等连接信息。
-- 全站通过 `bootstrap.yml` 全局启用 Java 21 虚拟线程：`spring.threads.virtual.enabled: true`。
-- Sentinel 规则源接入 Nacos 数据源（`bootstrap.yml`），实现熔断限流规则动态下发与持久化。
+- After importing [db/ningxiang_nacos.sql](db/ningxiang_nacos.sql) into Nacos, maintain MySQL, Redis, and RocketMQ connection info in `application-dev.yml`.
+- Virtual threads are enabled globally across all services via `bootstrap.yml`: `spring.threads.virtual.enabled: true`.
+- Sentinel rule sources are wired to the Nacos data source (`bootstrap.yml`) for dynamic delivery and persistence of circuit-breaking rules.
 
 ```yaml
 spring:
@@ -148,212 +153,210 @@ spring:
 
 ---
 
-## 🏗️ 微服务核心架构设计与工程实践
+## 🏗️ Microservice Core Architecture and Engineering Design
 
-本节依次展开 7 大核心工程能力的选型、取舍与落地实现，所有源码均提供直达链接可审阅：
+This section highlights the technical selection, architectural trade-offs, and engineering solutions implemented in Ningxiang Go. Click any source code link below to inspect exact implementation details:
 
-### 1. 网关安全卸载 & 零 RPC 认证 🛡️
+### 1. Gateway Security Offloading & Zero-RPC Authentication 🛡️
 
-- **架构演进**：传统每个微服务都发起 Feign 远程调用到认证中心校验 Token，链路开销巨大。宁享购将认证过滤器统一前置到 API 网关（Reactive Reactor 过滤器），网关在 Token 校验后把 Redis 中缓存的 Sa-Session 用户数据 JSON 序列化并 URL 编码后通过 `x-user-info` 请求头透传给下游，业务微服务仅做一次 Header 解码即完成登录态注入，**内部鉴权 RPC 开销降为 0**。
-- **时序流程**：
+- **Architectural Evolution**: Refactored the traditional pattern where every microservice issues Feign RPC calls to the auth center for token validation. All authentication filters are unified at the API Gateway layer (Reactive Reactor filters). Upon token validation, the gateway extracts Sa-Session user data cached in Redis, serializes it into JSON, URL-encodes it, and passes it downstream via the `x-user-info` HTTP header. Business microservices simply decode this header, **reducing internal RPC authentication overhead to exactly zero**.
+- **Sequence Diagram**:
 
 ```mermaid
 sequenceDiagram
-    actor Client as 客户端
-    participant Gateway as "宁享购网关<br/>(ningxiang-gateway)"
-    participant Auth as "认证中心<br/>(ningxiang-auth)"
-    participant Service as "业务微服务<br/>(如 ningxiang-order)"
+    actor Client as Client App
+    participant Gateway as "Ningxiang Gateway (ningxiang-gateway)"
+    participant Auth as "Auth Center (ningxiang-auth)"
+    participant Service as "Business Service (e.g., ningxiang-order)"
 
-    Client->>Gateway: 发起带 JWT Token 的 HTTP 请求
-    Note over Gateway: SaTokenConfig 匹配路由规则
-    Gateway-->>Gateway: SaReactorFilter 拦截并校验 Token
-    Gateway-->>Gateway: 从 Redis 提取关联 Sa-Session (用户数据)
-    Note over Gateway: GlobalAuthFilter 序列化 + URL 编码用户 Payload
-    Gateway->>Service: 转发请求 (携带 x-user-info 透传头)
-    Note over Service: AuthFilter 解码 Header 并注入 ThreadLocal
-    Service-->>Client: 快速响应业务逻辑 (全程 0 次内部 Feign 调用!)
+    Client->>Gateway: Issue HTTP request with JWT Token
+    Note over Gateway: SaTokenConfig matches route rules
+    Gateway-->>Gateway: SaReactorFilter intercepts & validates token
+    Gateway-->>Gateway: Extract associated Sa-Session (User Data)
+    Note over Gateway: GlobalAuthFilter serializes & URL-encodes user payload
+    Gateway->>Service: Forward request (with x-user-info header)
+    Note over Service: AuthFilter decodes header & populates ThreadLocal
+    Service-->>Client: Fast response processing (0 internal Feign calls!)
 ```
 
-- **📂 源码直达**：
-  - [SaTokenConfig.java (网关路由安全过滤器)](ningxiang-gateway/src/main/java/com/ningxiang/shop/gateway/config/SaTokenConfig.java)
-  - [GlobalAuthFilter.java (网关用户信息序列化透传过滤器)](ningxiang-gateway/src/main/java/com/ningxiang/shop/gateway/filter/GlobalAuthFilter.java)
-  - [AuthFilter.java (业务侧轻量 Header 解码过滤器)](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/filter/AuthFilter.java)
-  - [TokenStore.java (认证中心无状态 JWT 令牌管理器)](ningxiang-auth/src/main/java/com/ningxiang/shop/auth/manager/TokenStore.java)
+- **📂 Direct Source Code Links**:
+  - [SaTokenConfig.java (Gateway Route Security Filter)](ningxiang-gateway/src/main/java/com/ningxiang/shop/gateway/config/SaTokenConfig.java)
+  - [GlobalAuthFilter.java (Gateway User Info Serialization Filter)](ningxiang-gateway/src/main/java/com/ningxiang/shop/gateway/filter/GlobalAuthFilter.java)
+  - [AuthFilter.java (Lightweight Service Header Decoding Filter)](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/filter/AuthFilter.java)
+  - [TokenStore.java (Auth Center Stateless JWT Token Manager)](ningxiang-auth/src/main/java/com/ningxiang/shop/auth/manager/TokenStore.java)
 
 ---
 
-### 2. 注解驱动多级缓存 + 一致性同步 🚀
+### 2. Annotation-Driven Multi-Level Caching & Consistency Sync 🚀
 
-- **架构演进**：高并发商品查询场景 Redis 网络 I/O 是瓶颈。宁享购自研 **Spring Cache 规范**兼容的 `MultilevelCacheManager`：本地 JVM Caffeine 作为 L1 缓存（微秒级命中），远端 Redis 作为 L2 缓存。查询优先命中 Caffeine，未命中再回源 Redis；当商品变更触发缓存清理时，先清理 Redis，再通过 RocketMQ 广播一条失效通知，**所有微服务实例监听并清理本地 Caffeine**，以最小化一致性同步开销。
-- **一致性同步流程图**：
+- **Architectural Evolution**: High-concurrency promotions suffer from Redis network I/O bottlenecks. Ningxiang Go features a custom `MultilevelCacheManager` adhering to Spring Cache abstractions. Local JVM Caffeine acts as the Level-1 cache (microsecond latency), while remote Redis acts as the Level-2 cache. Cache hits resolve instantly at L1. Upon product edits or cache evictions, the service purges Redis and broadcasts invalidation notices via RocketMQ. All microservice instances listen to this broadcast and clear local Caffeine caches, **minimizing consistency synchronization overhead**.
+- **Cache Synchronization Flowchart**:
 
 ```mermaid
 graph TD
-    A["海量并发查询"] --> B{"L1 本地缓存 Caffeine"}
-    B -- "命中 → 微秒返回" --> C["客户端"]
-    B -- "未命中" --> D{"L2 分布式缓存 Redis"}
-    D -- "命中 → 回写 Caffeine 并返回" --> C
-    D -- "未命中" --> E[("MySQL 数据库回源")]
-    E --> F["写回 Redis + Caffeine"] --> C
+    A["Concurrent Query"] --> B{"L1 Local Cache Caffeine"}
+    B -- "Hit: Microsecond return" --> C["Client"]
+    B -- "Miss" --> D{"L2 Distributed Cache Redis"}
+    D -- "Hit: Write back Caffeine & return" --> C
+    D -- "Miss" --> E[("MySQL Database Fallback")]
+    E --> F["Write back Redis + Caffeine"] --> C
 
-    G["后台管理员编辑商品"] --> H("更新数据库")
-    H --> I["清理 L2 Redis 缓存"]
-    I --> J["清理本地 Caffeine"]
-    J --> K["RocketMQ 广播消息 PRODUCT_CACHE_SYNC_TOPIC"]
-    K --> L["服务节点 1"] --> M["清理本地 JVM 缓存"]
-    K --> N["服务节点 2"] --> O["清理本地 JVM 缓存"]
-    K --> P["服务节点 3"] --> Q["清理本地 JVM 缓存"]
+    G["Product Admin Edit"] --> H("Update Database")
+    H --> I["Purge L2 Redis Cache"]
+    I --> J["Caffeine Local Evict"]
+    J --> K["Broadcast RocketMQ Message: PRODUCT_CACHE_SYNC_TOPIC"]
+    K --> L["Service Node 1"] --> M["Evict Local JVM Cache"]
+    K --> N["Service Node 2"] --> O["Evict Local JVM Cache"]
+    K --> P["Service Node 3"] --> Q["Evict Local JVM Cache"]
 ```
 
-- **📂 源码直达**：
-  - [MultilevelCache.java (二级缓存容器实现)](ningxiang-product/src/main/java/com/ningxiang/shop/product/config/MultilevelCache.java)
-  - [MultilevelCacheManager.java (注解驱动缓存管理器)](ningxiang-product/src/main/java/com/ningxiang/shop/product/config/MultilevelCacheManager.java)
-  - [MultilevelCacheConfig.java (Spring 自动装配配置)](ningxiang-product/src/main/java/com/ningxiang/shop/product/config/MultilevelCacheConfig.java)
-  - [ProductCacheSyncListener.java (RocketMQ 广播缓存失效监听器)](ningxiang-product/src/main/java/com/ningxiang/shop/product/listener/ProductCacheSyncListener.java)
+- **📂 Direct Source Code Links**:
+  - [MultilevelCache.java (Dual-Level Cache Container Implementation)](ningxiang-product/src/main/java/com/ningxiang/shop/product/config/MultilevelCache.java)
+  - [MultilevelCacheManager.java (Annotation-Driven Cache Manager)](ningxiang-product/src/main/java/com/ningxiang/shop/product/config/MultilevelCacheManager.java)
+  - [MultilevelCacheConfig.java (Spring Auto-Configuration)](ningxiang-product/src/main/java/com/ningxiang/shop/product/config/MultilevelCacheConfig.java)
+  - [ProductCacheSyncListener.java (RocketMQ Broadcast Cache Eviction Listener)](ningxiang-product/src/main/java/com/ningxiang/shop/product/listener/ProductCacheSyncListener.java)
 
 ---
 
-### 3. Java 21 虚拟线程 & 高 I/O 吞吐优化 ⚡
+### 3. Java 21 Virtual Threads & High-I/O Throughput Optimization ⚡
 
-- **架构演进**：传统 Tomcat 容器的重 OS 内核线程池，在高 I/O 业务峰下内核态上下文切换开销巨大。宁享购全站运行在 JDK 21 LTS，`spring.threads.virtual.enabled: true` 全局启用虚拟线程，Tomcat 按请求自动分配重量仅数百字节的虚拟线程，**显著提升网络吞吐**与 JVM 堆平滑度。
-- **📂 配置直达**：
-  - [bootstrap.yml (网关虚拟线程配置)](ningxiang-gateway/src/main/resources/bootstrap.yml#L3-L6)
-  - 全部 11 个业务微服务均在 `bootstrap.yml` 中全局启用虚拟线程。
-
----
-
-### 4. 动态多数据源读写分离 + Seata 分布式事务 🗄️
-
-- **架构演进**：
-  - **读写分离**：各微服务通过 `@DS("master")` 与 `@DS("slave")` 注解动态路由数据源，把商品、订单、支付等高频查询负载压到只读从库，实现物理读写解耦。
-  - **分布式事务**：跨模块事务（如下单同时扣库存）由 Seata 全局事务管理器（AT/TCC 模式）驱动，Feign 远程调用通过拦截器传播 XID，**跨网络分区保证最终一致性**。
-- **📂 源码直达**：
-  - [SeataRequestInterceptor.java (Seata XID Feign 透传拦截器)](ningxiang-common/ningxiang-common-database/src/main/java/com/ningxiang/shop/common/database/config/SeataRequestInterceptor.java)
-  - [pom.xml (动态数据源依赖)](ningxiang-common/ningxiang-common-database/pom.xml#L35-L42)
+- **Architectural Evolution**: Heavy native OS thread pools in traditional Tomcat containers cause significant kernel thread context-switching overhead under peak I/O loads. Running on JDK 21 LTS, virtual threads (`spring.threads.virtual.enabled: true`) are globally enabled. Tomcat automatically allocates lightweight virtual threads (occupying a few hundred bytes each) per request, vastly improving network throughput and smoothing JVM heap fluctuations.
+- **📂 Direct Configuration Links**:
+  - [bootstrap.yml (Gateway Virtual Threads Configuration)](ningxiang-gateway/src/main/resources/bootstrap.yml#L3-L6)
+  - Virtual threads are globally enabled across all 11 business microservices via `bootstrap.yml`.
 
 ---
 
-### 5. 多 SKU 并发加锁 & 死锁规避 + 看门狗续期 🔒
+### 4. Dynamic Multi-DataSource Read/Write Splitting & Seata Distributed Transactions 🗄️
 
-- **痛点**：多 SKU 订单锁库存操作如果加锁顺序不一致（A 锁 SKU1 → SKU2；B 锁 SKU2 → SKU1），**极易触发分布式死锁**。
-- **工程解**：
-  - **物理锁序归一化**：加锁前对所有 SKU ID 做 **升序排序**，保证所有并发线程按完全一致的物理顺序拿锁，**破坏环路等待条件**。
-  - **Redisson 看门狗自动续期**：基于 Redisson 实现分布式锁，启用 10 秒一次看门狗续期，**杜绝长事务/GC 卡顿造成的锁提前释放**，从机制上消除库存超卖。
-- **📂 源码直达**：
-  - [SkuStockLockServiceImpl.java (防死锁加锁实现)](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L91-L177)
-
----
-
-### 6. 通用 AOP 幂等框架（SpEL 解析 + Redis 状态机）🛡️
-
-- **痛点**：RocketMQ 网络重试与前端重复点击造成数据重复；传统 `select count(*)` 先查后写存在读写间隙竞态。
-- **工程解**：
-  - **零侵入 AOP + SpEL 动态解析**：自定义 `@Idempotent` 注解，切面通过 Spring 表达式语言 (SpEL) 动态提取业务主键（订单号、支付流水号等）。
-  - **Redis 三阶段状态控制**：Redis `SETNX` 抢占 `PROCESSING` 中状态，成功执行业务则写入 `SUCCESS` 状态并设置 TTL；异常则主动删除 Key 以释放合法重试机会。
-- **📂 源码直达**：
-  - [Idempotent.java (幂等注解声明)](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/annotation/Idempotent.java)
-  - [IdempotentAspect.java (SpEL + Redis 状态机切面)](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/aspect/IdempotentAspect.java)
-  - [OrderNotifyStockConsumer.java (MQ 消费端幂等拦截)](ningxiang-product/src/main/java/com/ningxiang/shop/product/listener/OrderNotifyStockConsumer.java#L21-L28)
+- **Architectural Evolution**:
+  - **Read/Write Splitting**: Microservices leverage dynamic data source routing via `@DS("master")` and `@DS("slave")` annotations, routing read-heavy queries to read-only replicas to achieve physical read/write decoupling.
+  - **Distributed Transactions**: Cross-module transactions (e.g., placing an order while deducting stock) use Seata Global Transaction Manager (AT/TCC modes). XIDs are propagated across Feign RPC calls, guaranteeing eventual consistency across network partitions.
+- **📂 Direct Source Code Links**:
+  - [SeataRequestInterceptor.java (Seata XID Feign Propagation Interceptor)](ningxiang-common/ningxiang-common-database/src/main/java/com/ningxiang/shop/common/database/config/SeataRequestInterceptor.java)
+  - [pom.xml (Dynamic Data Source Dependencies)](ningxiang-common/ningxiang-common-database/pom.xml#L35-L42)
 
 ---
 
-### 7. Sentinel 熔断限流 + Nacos 规则持久化 🚦
+### 5. Multi-SKU Concurrent Locking, Anti-Deadlock, & Watchdog Auto-Renewal 🔒
 
-- **痛点**：锁库存、支付结算等高负载接口需要熔断保护，Sentinel 默认内存规则重启即丢失。
-- **工程解**：
-  - **流量控制 + Fallback**：核心 API 通过 `@SentinelResource` 防护，突发峰值触发 `BlockHandler` 排队重试，运行时异常进入 `Fallback` 兜底。
-  - **Nacos 规则源持久化**：通过 `bootstrap.yml` 将 Sentinel 数据源接入 Nacos 配置中心，**规则由 Nacos 统一管理并动态下发，重启不丢失**。
-- **📂 源码直达**：
-  - [SkuStockLockServiceImpl.java (Sentinel 限流保护 + Fallback)](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L90-L190)
-  - [bootstrap.yml (Sentinel 接入 Nacos 数据源)](ningxiang-product/src/main/resources/bootstrap.yml#L23-L35)
+- **Pain Point**: Multi-SKU order lock operations with inconsistent lock ordering (e.g., Order A locks SKU1 -> SKU2; Order B locks SKU2 -> SKU1) frequently trigger **distributed deadlocks**.
+- **Engineering Solution**:
+  - **Physical Lock Order Normalization**: Prior to locking, incoming SKU IDs are sorted in **ascending order**, ensuring all concurrent threads acquire physical locks in identical sequence to break circular wait conditions.
+  - **Redisson Watchdog Auto-Renewal**: Implements Redisson locks with Watchdog auto-renewal (every 10 seconds), preventing premature lock release caused by long transactions or GC pauses, effectively eliminating stock overselling.
+- **📂 Direct Source Code Links**:
+  - [SkuStockLockServiceImpl.java (Anti-Deadlock Lock Implementation)](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L91-L177)
 
 ---
 
-## 🛠️ 后端微服务模块构成
+### 6. Universal AOP Idempotency Framework (SpEL & Redis State Machine) 🛡️
+
+- **Pain Point**: Network retries in RocketMQ and duplicate client clicks cause data duplication. Traditional `select count(*)` DB checks are prone to race conditions during read-write gaps.
+- **Engineering Solution**:
+  - **Non-Intrusive AOP & SpEL Parsing**: Defines a custom `@Idempotent` annotation. The aspect uses Spring Expression Language (SpEL) to dynamically extract business primary keys (e.g., order IDs, payment transaction IDs).
+  - **3-Phase Redis State Control**: Uses Redis `SETNX` to mark tokens as `PROCESSING`. Successful execution updates state to `SUCCESS` with a TTL; exceptions purge the key to allow legitimate retries.
+- **📂 Direct Source Code Links**:
+  - [Idempotent.java (Idempotent Annotation Declaration)](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/annotation/Idempotent.java)
+  - [IdempotentAspect.java (SpEL & Redis State Control Aspect)](ningxiang-common/ningxiang-common-security/src/main/java/com/ningxiang/shop/common/security/aspect/IdempotentAspect.java)
+  - [OrderNotifyStockConsumer.java (MQ Consumer Idempotent Interception)](ningxiang-product/src/main/java/com/ningxiang/shop/product/listener/OrderNotifyStockConsumer.java#L21-L28)
+
+---
+
+### 7. Sentinel Circuit Breaking & Nacos Dynamic Rule Persistence 🚦
+
+- **Pain Point**: High-load endpoints (stock locking, payment settlement) require circuit breaking. Native Sentinel rules stored in memory are lost upon instance restarts.
+- **Engineering Solution**:
+  - **Flow Control & Fallback**: Protects critical APIs with `@SentinelResource`. Peak spikes trigger `BlockHandler` queue-and-retry responses, while `Fallback` handles runtime exceptions gracefully.
+  - **Nacos Rule Source Persistence**: Connects Sentinel data sources to Nacos Config Center via `bootstrap.yml`. Rules are centrally managed and pushed dynamically by Nacos, guaranteeing rule persistence.
+- **📂 Direct Source Code Links**:
+  - [SkuStockLockServiceImpl.java (Sentinel Protection & Fallback)](ningxiang-product/src/main/java/com/ningxiang/shop/product/service/impl/SkuStockLockServiceImpl.java#L90-L190)
+  - [bootstrap.yml (Sentinel-Nacos Datasource Integration)](ningxiang-product/src/main/resources/bootstrap.yml#L23-L35)
+
+---
+
+## 🛠️ Microservice Module Breakdown
 
 ```text
 ningxiang
-├─ningxiang-api -- 跨服务 RPC 接口层 (auth, product, order, user 等)
-├─ningxiang-auth -- 统一鉴权认证中心服务
-├─ningxiang-biz -- 业务配套服务 (对象图片存储、短信网关等)
-├─ningxiang-gateway -- API 统一网关入口 (Sa-Token Reactive 网关安全)
-├─ningxiang-leaf -- 分布式主键号段生成服务 (美团 Leaf 算法)
-├─ningxiang-multishop -- 商家端业务微服务
-├─ningxiang-platform -- 平台运营管理端业务微服务
-├─ningxiang-product -- 商品服务 + 多级缓存实现
-├─ningxiang-order -- 订单与事务服务
-├─ningxiang-payment -- 支付聚合服务
-├─ningxiang-rbac -- 角色 / 菜单权限管理服务
-├─ningxiang-search -- 搜索引擎服务 (ElasticSearch + Canal binlog 同步)
-├─ningxiang-user -- 用户账号与会员服务
-└─ningxiang-common -- 核心公共依赖与基础组件
+├─ningxiang-api -- Inter-service RPC interfaces (auth, product, order, user, etc.)
+├─ningxiang-auth -- Unified Authorization & Authentication Service
+├─ningxiang-biz -- Business Support Services (Image Storage, SMS Gateway)
+├─ningxiang-gateway -- Unified API Gateway (Sa-Token Reactive Gateway Security)
+├─ningxiang-leaf -- Distributed Primary Key Generator (Meituan Leaf Algorithm)
+├─ningxiang-multishop -- Merchant Platform Business Microservice
+├─ningxiang-platform -- Admin Operation Business Microservice
+├─ningxiang-product -- Product & Multi-Level Cache Service
+├─ningxiang-order -- Order & Transaction Service
+├─ningxiang-payment -- Aggregated Payment Service
+├─ningxiang-rbac -- Role & Menu Permission Service
+├─ningxiang-search -- Search Engine Service (ElasticSearch + Canal)
+├─ningxiang-user -- User Account & Membership Service
+└─ningxiang-common -- Core Shared Dependencies & Infrastructure Components
 ```
 
 ---
 
-## 📊 核心技术选型
+## 📊 Core Technology Stack
 
-- **开发语言**：Java 21 LTS
-- **微服务框架**：Spring Boot 3.3.0 + Spring Cloud 2023.0.1 + Spring Cloud Alibaba 2023.0.1.0
-- **注册 / 配置中心**：Nacos 2.3.2
-- **安全与认证**：Sa-Token 1.38.0 + sa-token-jwt（无状态 JWT 模式）
-- **分布式事务**：Seata 2.0.0（AT + TCC 双模式）
-- **消息队列**：RocketMQ 5.x
-- **L1 进程内缓存**：Caffeine 3.x
-- **L2 分布式缓存**：Redis 7.x + Jackson 序列化
-- **多数据源**：dynamic-datasource 4.3.0（MySQL 读写分离）
-- **数据库**：MySQL 8.0 + MyBatis / MyBatis-Plus
-- **前端工程**：Vue 3 + Vite 5 + TypeScript + Element Plus
+- **Language**: Java 21 (LTS)
+- **Microservice Framework**: Spring Boot 3.3.0 + Spring Cloud 2023.0.1 + Spring Cloud Alibaba 2023.0.1.0
+- **Registry / Config Center**: Nacos 2.3.2
+- **Security & Auth**: Sa-Token 1.38.0 + sa-token-jwt (Stateless JWT mode)
+- **Distributed Transactions**: Seata 2.0.0 (AT/TCC modes)
+- **Message Queue**: RocketMQ 5.x
+- **L1 Cache**: Caffeine 3.x
+- **L2 Cache**: Redis 7.x + Jackson Serialization
+- **Multi-DataSource**: dynamic-datasource 4.3.0 (MySQL Read/Write Splitting)
+- **Database**: MySQL 8.0 + MyBatis / MyBatis-Plus
+- **Frontend**: Vue 3 + Vite 5 + TypeScript + Element Plus
 
 ---
 
-## 🤝 参与贡献
+## 🤝 Contributing
 
-欢迎贡献代码。简要流程：
+Contributions welcome. Quick flow:
 
 ```bash
-# 1. Fork → Clone → 切分支
+# 1. Fork → Clone → Branch
 git checkout -b feat/your-feature
 
-# 2. 全量编译打包（必须通过 BUILD SUCCESS）
+# 2. Full build verification (BUILD SUCCESS required)
 mvn clean package -DskipTests
 
-# 3. Commit 并提 PR
+# 3. Commit and open a PR
 git commit -m "feat: your change"
 git push origin feat/your-feature
 ```
 
-**欢迎贡献的方向**：
+**Welcome contribution directions**:
 
-- 🧪 补充各微服务的单元测试与集成测试
-- 🧩 引入新的高可用 / 可观测性组件（SkyWalking、Grafana 等）
-- 🧹 优化现有实现或修复 Issue
+- 🧪 Add unit and integration tests for microservices
+- 🧩 Introduce new HA / observability components (SkyWalking, Grafana, etc.)
+- 🧹 Optimize existing implementations or fix issues
 
 ---
 
-## 🔒 安全说明
+## 🔒 Security
 
-| 风险场景 | 防护措施 |
+| Risk Scenario | Mitigation |
 |---------|---------|
-| **JWT Token 伪造** | Sa-Token JWT 无状态签名校验；Token Store 统一颁发；服务重启即时失效 |
-| **支付回调伪造** | `@Idempotent` 幂等切面 + 签名校验 + 支付流水号唯一约束 |
-| **分布式锁提前释放** | Redisson Watchdog 自动续期；业务失败主动删除幂等 Key |
-| **数据库明文密码** | 所有数据库连接串通过 Nacos 配置中心下发，生产环境启用加密插件 |
-| **Sentinel 规则外泄** | 所有 Fallback 拦截原始异常堆栈，不向前端暴露底层报错细节 |
+| **JWT Token Forgery** | Sa-Token JWT stateless signature verification; Token Store unified issuance; instant invalidation on service restart |
+| **Payment Callback Forgery** | `@Idempotent` aspect + signature verification + payment transaction ID unique constraint |
+| **Distributed Lock Premature Release** | Redisson Watchdog auto-renewal; proactive deletion of idempotent keys on business failure |
+| **Database Plaintext Passwords** | All database connection strings distributed via Nacos Config Center; production environment enables encryption plugins |
+| **Sentinel Rule Disclosure** | All Fallback intercepts raw exception stacks; never exposes underlying error details to frontend |
 
-**漏洞上报**：发现安全问题请直接发邮件至 **`maox_neta@foxmail.com`**，不要公开在 Issue 里。承诺 **24 小时内首次响应**，7 个工作日内给出修复评估与进度。
+**Vulnerability disclosure**: Report security issues directly to **`maox_neta@foxmail.com`** — do not file a public issue. We commit to a **first response within 24 hours** and a fix assessment with progress within 7 business days.
 
 ---
-
-## 📜 许可证
-
-基于 **GNU Affero General Public License v3.0** 开源协议。详见 [LICENSE](LICENSE) 文件。
-
-
 
 ---
 
 ## ⭐ Star & Support
+
+If you find this project useful or inspiring, please consider giving it a ⭐ **Star** on GitHub! It helps more developers discover the work and supports continuous open-source maintenance.
+
+[![Star History Chart](https://api.star-history.com/svg?repos=MeiSiristhebest/ningxiangshop&type=Date)](https://star-history.com/#MeiSiristhebest/ningxiangshop&Date)
 
 ### 🌟 Stargazers Over Time
 [![Stargazers repo roster for @MeiSiristhebest/ningxiangshop](https://reporoster.com/stars/MeiSiristhebest/ningxiangshop)](https://github.com/MeiSiristhebest/ningxiangshop/stargazers)
@@ -363,7 +366,6 @@ git push origin feat/your-feature
   <img src="https://contrib.rocks/image?repo=MeiSiristhebest/ningxiangshop" alt="Contributors" />
 </a>
 
+## 📜 License
 
-If you find this project useful or inspiring, please consider giving it a ⭐ **Star** on GitHub! It helps more developers discover the work and supports continuous maintenance.
-
-[![Star History Chart](https://api.star-history.com/svg?repos=MeiSiristhebest/ningxiangshop&type=Date)](https://star-history.com/#MeiSiristhebest/ningxiangshop&Date)
+Licensed under the [GNU Affero General Public License v3.0](LICENSE).
