@@ -1,0 +1,11 @@
+
+  _   _ _                   _                             _____       
+ | \ | (_)                 (_)                           / ____|      
+ |  \| |_ _ __   __ ___  __ _  __ _ _ __   __ _  ______ | |  __  ___  
+ | . ` | | '_ \ / _` \ \/ /| |/ _` | '_ \ / _` ||______|| | |_ |/ _ \ 
+ | |\  | | | | | (_| |>  < | | (_| | | | | (_| |        | |__| | (_) |
+ |_| \_|_|_| |_|\__, /_/\_\|_|\__,_|_| |_|\__, |         \_____|\___/ 
+                 __/ |                     __/ |                      
+                |___/                     |___/                       
+ :: Ningxiang Go Enterprise Distributed Microservices System (Java 21 LTS) ::
+ ⭐ Star on GitHub: https://github.com/MeiSiristhebest/ningxiangshop
