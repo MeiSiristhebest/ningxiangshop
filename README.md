@@ -376,3 +376,6 @@ If you find this project useful or inspiring, please consider giving it a ⭐ **
 ## 📜 License
 
 Licensed under the [GNU Affero General Public License v3.0](LICENSE).
+
+<!-- Scarf Telemetry Pixel -->
+<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=p2L36r5iF7fAu6cd2J2Y41Cp6Z3YJHInGjzgouIZuLLHJhyoV9" />
