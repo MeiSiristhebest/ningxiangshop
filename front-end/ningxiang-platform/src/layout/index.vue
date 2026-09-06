@@ -30,7 +30,7 @@
 <script setup>
 import AppMain from './components/AppMain.vue'
 import Navbar from './components/Navbar.vue'
-import Sidebar from './components/sidebar/index.vue'
+import Sidebar from './components/Sidebar/index.vue'
 const appStore = useAppStore()
 const fixedHeader = ref(true)
 const classObj = computed(() => {
