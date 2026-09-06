@@ -1,0 +1,51 @@
+name: Frontend Vue 3 & UniApp Verification
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'front-end/**'
+      - '.github/workflows/frontend-check.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'front-end/**'
+      - '.github/workflows/frontend-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-frontend:
+    name: Build & Verify ${{ matrix.project }} (Node 20)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [ningxiang-platform, ningxiang-multishop]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install Frontend Dependencies
+        working-directory: front-end/${{ matrix.project }}
+        run: pnpm install --no-frozen-lockfile --ignore-scripts
+
+      - name: Build Vue 3 Distribution
+        working-directory: front-end/${{ matrix.project }}
+        run: pnpm run build

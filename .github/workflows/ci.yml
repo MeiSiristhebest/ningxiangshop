@@ -5,17 +5,17 @@ on:
   push:
     branches: [main, master]
     paths:
-      - 'ningxiang-**/**'
-      - 'src/**'
-      - 'pom.xml'
-      - '.github/workflows/ci.yml'
+      - "ningxiang-**/**"
+      - "src/**"
+      - "pom.xml"
+      - ".github/workflows/ci.yml"
   pull_request:
     branches: [main, master]
     paths:
-      - 'ningxiang-**/**'
-      - 'src/**'
-      - 'pom.xml'
-      - '.github/workflows/ci.yml'
+      - "ningxiang-**/**"
+      - "src/**"
+      - "pom.xml"
+      - ".github/workflows/ci.yml"
   workflow_dispatch:
 
 permissions:
@@ -42,7 +42,7 @@ jobs:
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: "21"
           distribution: ${{ matrix.distribution }}
           cache: maven
 
